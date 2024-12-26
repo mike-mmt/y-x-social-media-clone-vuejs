@@ -10,7 +10,7 @@ const setupDatabaseConnection = async (config) => {
 
     // tworzymy bazę tswproject jeśli nie istnieje
     try {
-        let exists = await client.existsDatabase({
+        await client.existsDatabase({
             name: config.db,
             username: config.rootUser,
             password: config.rootPassword
@@ -36,18 +36,22 @@ const setupDatabaseConnection = async (config) => {
 
     const session = await pool.acquire();
 
-    const createClassIfNotExists = async (className) => {
+    const createClassIfNotExists = async (className, classType /* V or E */) => {
         const classExists = await session.class.get(className).catch(() => null);
         if (!classExists) {
-            await session.command(`CREATE CLASS ${className} EXTENDS V`).all();
+            await session.command(`CREATE CLASS ${className} EXTENDS ${classType}`).all();
             console.log(`Class ${className} created.`);
         } else {
             console.log(`Class ${className} already exists.`);
         }
     };
 
-    await createClassIfNotExists('User');
-    await createClassIfNotExists('Post');
+    await createClassIfNotExists('User', 'V');
+    await createClassIfNotExists('Post', 'V');
+    await createClassIfNotExists('Likes', 'E');
+    await createClassIfNotExists('Follows', 'E');
+    await createClassIfNotExists('Muted', 'E');
+    await createClassIfNotExists('Blocked', 'E');
 
     session.close();
 
