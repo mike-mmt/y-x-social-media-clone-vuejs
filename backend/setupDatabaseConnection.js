@@ -36,10 +36,13 @@ const setupDatabaseConnection = async (config) => {
 
     const session = await pool.acquire();
 
-    const createClassIfNotExists = async (className, classType /* V or E */) => {
+    const createClassIfNotExists = async (className, classType /* V or E */, additionalCommands = []) => {
         const classExists = await session.class.get(className).catch(() => null);
         if (!classExists) {
             await session.command(`CREATE CLASS ${className} EXTENDS ${classType}`).all();
+            for (const command of additionalCommands) {
+                await session.command(command);
+            }
             console.log(`Class ${className} created.`);
         } else {
             console.log(`Class ${className} already exists.`);
@@ -48,10 +51,12 @@ const setupDatabaseConnection = async (config) => {
 
     await createClassIfNotExists('User', 'V');
     await createClassIfNotExists('Post', 'V');
-    await createClassIfNotExists('Likes', 'E');
-    await createClassIfNotExists('Follows', 'E');
-    await createClassIfNotExists('Muted', 'E');
-    await createClassIfNotExists('Blocked', 'E');
+    await createClassIfNotExists('Posted', 'E', ['CREATE PROPERTY Posted.out LINK User', 'CREATE PROPERTY Posted.in LINK Post']);
+    await createClassIfNotExists('Reply', 'E', ['CREATE PROPERTY Reply.out LINK Post', 'CREATE PROPERTY Reply.in LINK Post']);
+    await createClassIfNotExists('Likes', 'E', ['CREATE PROPERTY Likes.out LINK User', 'CREATE PROPERTY Likes.in LINK Post']);
+    await createClassIfNotExists('Follows', 'E', ['CREATE PROPERTY Follows.out LINK User', 'CREATE PROPERTY Follows.in LINK User']);
+    await createClassIfNotExists('Muted', 'E', ['CREATE PROPERTY Muted.out LINK User', 'CREATE PROPERTY Muted.in LINK User']);
+    await createClassIfNotExists('Blocked', 'E', ['CREATE PROPERTY Blocked.out LINK User', 'CREATE PROPERTY Blocked.in LINK User']);
 
     session.close();
 

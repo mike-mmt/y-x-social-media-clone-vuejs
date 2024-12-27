@@ -1,6 +1,9 @@
 import express from "express";
 import path from "node:path";
 import bodyParser from "body-parser";
+import dotenv from 'dotenv';
+
+dotenv.config();
 // import cookie_parser from "cookie-parser";
 import setupDatabaseConnection from "./setupDatabaseConnection.js";
 
@@ -10,6 +13,13 @@ app.use(express.json());
 
 app.use(express.static(path.join("public")));
 
+// passport
+app.use(passport.initialize());
+// import passportConfig from './passport-config.js'
+import "./passport-config.js";
+// passportConfig(passport);
+
+// routes
 app.get('/', function (req,res) {
     res.sendFile(path + "index.html");
 });
@@ -18,7 +28,10 @@ import users from "./routes/users.js";
 app.use('/api/users', users);
 import posts from "./routes/posts.js";
 app.use('/api/posts', posts);
+import auth from './routes/auth.js';
+app.use('/api/auth', auth);
 
+// db config
 const orientConfig = {
     host: 'localhost',
     port: 2424,
@@ -31,7 +44,12 @@ const orientConfig = {
 
 import {config as configRepos} from "./repository/configRepos.js";
 
+
+// authorization
+import passport from 'passport';
+
 try {
+    // setup db
     const { client, pool } = await setupDatabaseConnection(orientConfig);
 
     // config user repository
