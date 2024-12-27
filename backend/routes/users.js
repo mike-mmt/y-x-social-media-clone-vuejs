@@ -64,7 +64,6 @@ router.delete('/:id', async (req, res) => {
 router.post('/:username/follow', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
     const user = await req.user;
-    console.log(user);
     try {
         await userRepo.follow(user, username);
         res.status(200).end();

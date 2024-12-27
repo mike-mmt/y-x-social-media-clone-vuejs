@@ -7,7 +7,6 @@ const setupDatabaseConnection = async (config) => {
         host: config.host,
         port: config.port,
     });
-
     // tworzymy bazę tswproject jeśli nie istnieje
     try {
         await client.existsDatabase({
@@ -16,13 +15,13 @@ const setupDatabaseConnection = async (config) => {
             password: config.rootPassword
         });
     } catch (err) {
-        if (err instanceof OrientDB.RequestError) {
+        // if (err instanceof OrientDB.RequestError) {
             await client.createDatabase({
                 name: config.db,
                 username: config.rootUser,
                 password: config.rootPassword
             });
-        }
+        // }
     }
 
     let pool = await client.sessions({

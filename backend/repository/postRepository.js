@@ -1,20 +1,22 @@
+// noinspection SqlNoDataSourceInspection
+
 import * as crypto from 'node:crypto';
 
 import {pool} from './configRepos.js';
 
-async function getAll() {
+export async function findAll() {
     const session = await pool.acquire();
     const result = await session.select().from('Post').all();
     await session.close();
     return result;
 }
 
-async function getById(id) {
+export async function findById(id) {
     const session = await pool.acquire();
     return await session.select().from('Post').where({'id': id}).one();
 }
 
-async function save(post, authorUser) {
+export async function save(post, authorUser) {
     post['id'] = crypto.randomUUID();
     post['datePosted'] = new Date();
     const session = await pool.acquire();
@@ -43,19 +45,19 @@ async function save(post, authorUser) {
     return created;
 }
 
-async function deleteById(id) {
+export async function deleteById(id) {
     const session = await pool.acquire();
     return await session.delete('VERTEX', 'Post').where({'id': id}).one();
 }
 
-async function getReplies(id) {
+export async function getReplies(id) {
     const session = await pool.acquire();
     const result = await session.select().from('Post').where({'parent': id}).all();
     await session.close();
     return result;
 }
 
-async function like(id, user) {
+export async function like(id, user) {
     const session = await pool.acquire();
     const post = await session.select().from('Post').where({'id': id}).one()
     if (!post) {
@@ -73,7 +75,7 @@ async function like(id, user) {
     return created;
 }
 
-async function unlike(id, user) {
+export async function unlike(id, user) {
     const session = await pool.acquire();
     const post = await session.select().from('Post').where({'id': id}).one()
     const result = await session.delete('EDGE', 'Likes').where({
@@ -85,5 +87,54 @@ async function unlike(id, user) {
     }
     await session.close();
 }
+export async function findWithPagination(page, limit) {
+    const session = await pool.acquire();
+    const result = await session.select().from('Post').limit(limit).skip(page * limit).all();
+    await session.close();
+    return result;
+}
 
-export {getAll, save, getById, deleteById, like, unlike, getReplies}
+export async function findNewestFromFollowedWithPagination(user, page, limit) {
+    const session = await pool.acquire();
+    const result = await session.query(
+        `SELECT expand(out('Posted'))
+         FROM (
+                  SELECT expand(out('Follows'))
+                  FROM User
+                  WHERE @rid = :userRid
+              )
+         ORDER BY datePosted DESC
+             LIMIT :limit
+SKIP :offset`,
+        { params: {
+            userRid: user['@rid'],
+            limit: limit,
+            offset: page * limit
+            }}).all()
+    await session.close();
+    return result;
+}
+
+export async function findNewestFromRandomNonFollowedWithPagination(user, page, limit) {
+    const session = await pool.acquire();
+    // select non-followed users
+    const notFollowedUsers = await session.query(
+     `SELECT FROM User WHERE @rid NOT IN (SELECT in FROM Follows WHERE out = :userRid) AND @rid != :userRid`, {params: {userRid: user['@rid']}}).all();
+    // select posts from non-followed users
+    const notFollowedPosts = await session.query(
+        `SELECT expand(out('Posted')) FROM (
+            SELECT expand(out('Posted'))
+            FROM User
+            WHERE @rid IN :notFollowedUsers
+            ) 
+        ORDER BY datePosted DESC 
+        LIMIT :limit
+        SKIP :offset`,
+        { params: {
+            notFollowedUsers: notFollowedUsers.map(u => u['@rid']),
+            limit: limit,
+            offset: page * limit
+        }}).all()
+    await session.close();
+    return notFollowedUsers
+}
