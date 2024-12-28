@@ -51,10 +51,10 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:username', async (req, res) => {
     const id = req.params.id;
     try {
-        await userRepo.deleteById(id);
+        await userRepo.deleteByUsername(id);
         res.status(204).end();
     } catch (e) {
         res.status(500).json({message: e.message});
@@ -106,6 +106,17 @@ router.post('/:username/unmute', passport.authenticate('jwt', {session: false}),
 });
 
 router.post('/:username/block', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const username = req.params.username;
+    const user = await req.user;
+    try {
+        await userRepo.block(user, username);
+        res.status(200).end();
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
+router.post('/:username/unblock', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
     const user = await req.user;
     try {

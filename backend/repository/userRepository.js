@@ -2,24 +2,24 @@ import * as crypto from 'node:crypto';
 
 import {pool} from './configRepos.js';
 
-async function findAll() {
+export async function findAll() {
     const session = await pool.acquire();
     const result = await session.select().from('User').all();
     await session.close();
     return result;
 }
 
-async function findById(id) {
+export async function findById(id) {
     const session = await pool.acquire();
     return await session.select().from('User').where({'id': id}).one();
 }
 
-async function findByUsername(username) {
+export async function findByUsername(username) {
     const session = await pool.acquire();
     return await session.select().from('User').where({'username': username}).one();
 }
 
-async function save(user) {
+export async function save(user) {
     const session = await pool.acquire();
     const existing = await session.select().from('User').where({'username': user.username}).or({'email': user.email}).one();
     if (existing) {
@@ -30,15 +30,24 @@ async function save(user) {
     return await session.create('VERTEX', 'User').set(user).one();
 }
 
-async function deleteById(id) {
+export async function deleteById(id) {
     const session = await pool.acquire();
     const result = await session.delete('VERTEX', 'User').where({'id': id}).one()
     await session.close();
     return result;
 }
 
+export async function deleteByUsername(username) {
+    const session = await pool.acquire();
+    const result = await session.delete('VERTEX', 'User').where({'username': username}).one()
+    await session.close();
+    return result;
+}
 
-async function follow(follower, followedUsername) {
+export async function follow(follower, followedUsername) {
+    if (follower.username === followedUsername) {
+        throw new Error('Cannot follow yourself');
+    }
     const session = await pool.acquire();
     session.begin();
     const followed = await session.select().from('User').where({'username': followedUsername}).one();
@@ -60,7 +69,7 @@ async function follow(follower, followedUsername) {
     await session.close();
 }
 
-async function unfollow(follower, followedUsername) {
+export async function unfollow(follower, followedUsername) {
     const session = await pool.acquire();
     const followed = await session.select().from('User').where({'username': followedUsername}).one();
     if (!followed) {
@@ -74,7 +83,10 @@ async function unfollow(follower, followedUsername) {
     return result;
 }
 
-async function mute(muter, mutedUsername) {
+export async function mute(muter, mutedUsername) {
+    if (muter.username === mutedUsername) {
+        throw new Error('Cannot mute yourself');
+    }
     const session = await pool.acquire();
     session.begin();
     const muted = await session.select().from('User').where({'username': mutedUsername}).one();
@@ -94,7 +106,7 @@ async function mute(muter, mutedUsername) {
     await session.close();
 }
 
-async function unmute(muter, mutedUsername) {
+export async function unmute(muter, mutedUsername) {
     const session = await pool.acquire();
     const muted = await session.select().from('User').where({'username': mutedUsername}).one();
     if (!muted) {
@@ -108,7 +120,10 @@ async function unmute(muter, mutedUsername) {
     return result;
 }
 
-async function block(blocker, blockedUsername) {
+export async function block(blocker, blockedUsername) {
+    if (blocker.username === blockedUsername) {
+        throw new Error('Cannot block yourself');
+    }
     const session = await pool.acquire();
     session.begin();
     const blocked = await session.select().from('User').where({'username': blockedUsername}).one();
@@ -128,7 +143,7 @@ async function block(blocker, blockedUsername) {
     await session.close();
 }
 
-async function unblock(blocker, blockedUsername) {
+export async function unblock(blocker, blockedUsername) {
     const session = await pool.acquire();
     const blocked = await session.select().from('User').where({'username': blockedUsername}).one();
     if (!blocked) {
@@ -141,6 +156,3 @@ async function unblock(blocker, blockedUsername) {
     await session.close();
     return result;
 }
-
-
-export {findAll, save, findById, findByUsername, deleteById, follow, unfollow, mute, unmute, block, unblock}

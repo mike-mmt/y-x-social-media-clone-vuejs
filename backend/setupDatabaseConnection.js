@@ -9,19 +9,14 @@ const setupDatabaseConnection = async (config) => {
     });
     // tworzymy bazę tswproject jeśli nie istnieje
     try {
-        await client.existsDatabase({
-            name: config.db,
-            username: config.rootUser,
-            password: config.rootPassword
-        });
-    } catch (err) {
-        // if (err instanceof OrientDB.RequestError) {
-            await client.createDatabase({
-                name: config.db,
-                username: config.rootUser,
-                password: config.rootPassword
-            });
-        // }
+
+    await client.createDatabase({
+        name: config.db,
+        username: config.rootUser,
+        password: config.rootPassword
+    });
+    } catch (e) {
+        console.log(e);
     }
 
     let pool = await client.sessions({
@@ -51,7 +46,7 @@ const setupDatabaseConnection = async (config) => {
     await createClassIfNotExists('User', 'V');
     await createClassIfNotExists('Post', 'V');
     await createClassIfNotExists('Posted', 'E', ['CREATE PROPERTY Posted.out LINK User', 'CREATE PROPERTY Posted.in LINK Post']);
-    await createClassIfNotExists('Reply', 'E', ['CREATE PROPERTY Reply.out LINK Post', 'CREATE PROPERTY Reply.in LINK Post']);
+    await createClassIfNotExists('Replied', 'E', ['CREATE PROPERTY Replied.out LINK Post', 'CREATE PROPERTY Replied.in LINK Post']);
     await createClassIfNotExists('Likes', 'E', ['CREATE PROPERTY Likes.out LINK User', 'CREATE PROPERTY Likes.in LINK Post']);
     await createClassIfNotExists('Follows', 'E', ['CREATE PROPERTY Follows.out LINK User', 'CREATE PROPERTY Follows.in LINK User']);
     await createClassIfNotExists('Muted', 'E', ['CREATE PROPERTY Muted.out LINK User', 'CREATE PROPERTY Muted.in LINK User']);
