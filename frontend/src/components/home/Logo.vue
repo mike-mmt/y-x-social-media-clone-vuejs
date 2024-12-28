@@ -1,10 +1,11 @@
 <script setup lang="ts">
 
-import Logo from "./home/Logo.vue";
 </script>
 
 <template>
-  <Logo />
+<a href="/">
+  <img src="/logo.png" class="logo" alt="Y Logo"  width="150"/>
+</a>
 </template>
 
 <style scoped>

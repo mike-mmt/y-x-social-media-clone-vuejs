@@ -1,10 +1,10 @@
 <script setup lang="ts">
 
-import Logo from "./home/Logo.vue";
+import Logo from "./Logo.vue";
 </script>
 
 <template>
-  <Logo />
+<Logo />
 </template>
 
 <style scoped>
