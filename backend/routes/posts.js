@@ -15,8 +15,8 @@ const filterFields = (obj) => Object.fromEntries(
 
 // schema for posting a post
 const postSchema = Joi.object({
-    body: Joi.string(),
-    media: Joi.string(),
+    body: Joi.string().min(1),
+    media: Joi.string().min(1).uri(),
     parent: Joi.string(),
 }).xor('body', 'media');
 

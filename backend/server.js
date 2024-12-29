@@ -47,6 +47,7 @@ import {config as configRepos} from "./repository/configRepos.js";
 
 // authorization
 import passport from 'passport';
+import {initDatabase} from './repository/init.js';
 
 try {
     // setup db
@@ -54,6 +55,9 @@ try {
 
     // config user repository
     configRepos(client, pool);
+
+    // await initDatabase() // ONLY RUN ONCE
+
 
     console.log(`Połączono z OrientDB: "${client.connected}"`);
     const apiPort = process.env.PORT || 3000;

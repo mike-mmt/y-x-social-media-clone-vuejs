@@ -27,7 +27,9 @@ export async function save(user) {
     }
     user['id'] = crypto.randomUUID();
     user['dateRegistered'] = new Date();
-    return await session.create('VERTEX', 'User').set(user).one();
+    const created = await session.create('VERTEX', 'User').set(user).one();
+    await session.close();
+    return created;
 }
 
 export async function deleteById(id) {
