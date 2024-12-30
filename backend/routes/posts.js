@@ -141,4 +141,22 @@ router.get('/nonfollowed', passport.authenticate('jwt', {session: false}), async
     }
 });
 
+router.get('/foryou', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    let {page} = req.query;
+    page = parseInt(page) || 0;
+    // amountOfUsers = Math.min(parseInt(amountOfUsers) || 10, 100);
+    // limit = Math.min(parseInt(limit) || 10, 100);
+    const limit = 5;
+    const amountOfUsers = limit;
+    const user = await req.user;
+    try {
+        const followedPosts = await postRepo.findNewestFromFollowedWithPagination(user, page, limit);
+        const randomPosts = await postRepo.findNewestFromRandomNonFollowedWithPagination(user, page, limit, amountOfUsers);
+        res.status(200).json([...followedPosts, ...randomPosts]);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({message: e.message});
+    }
+});
+
 export default router;

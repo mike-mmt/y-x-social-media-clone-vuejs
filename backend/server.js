@@ -56,7 +56,7 @@ try {
     // config user repository
     configRepos(client, pool);
 
-    // await initDatabase() // ONLY RUN ONCE
+    await initDatabase() // ONLY RUN ONCE
 
 
     console.log(`Połączono z OrientDB: "${client.connected}"`);

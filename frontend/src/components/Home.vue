@@ -15,14 +15,13 @@ function switchFeed(newFeed: Feeds) {
 </script>
 
 <template>
-  <div class="home">
-    <Sidebar/>
+
     <div class="main">
       <FeedSwitcher class="feed-switcher" @switch-feed="switchFeed" :feed="feed"/>
       <WritePost/>
       <Feed :feed="feed"/>
     </div>
-  </div>
+
 </template>
 
 <style scoped lang="scss">

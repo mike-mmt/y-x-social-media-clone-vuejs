@@ -6,21 +6,21 @@ import {pool} from './configRepos.js';
 
 export async function findAll() {
     const session = await pool.acquire();
-    const result = await session.select().from('Post').all();
+    const result = await session.query(`SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName FROM Post`).all();
     await session.close();
     return result;
 }
 
 export async function findById(id) {
     const session = await pool.acquire();
-    return await session.select().from('Post').where({'id': id}).one();
+    return await session.query(`SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName FROM Post WHERE id = :id`, {params: {id: id}}).one();
 }
 
 export async function save(post, authorUser) {
     post['id'] = crypto.randomUUID();
     post['datePosted'] = new Date();
     const session = await pool.acquire();
-    session.begin();
+    // session.begin();
     let created;
     try {
         if ('parent' in post) { // reply to a post
@@ -35,8 +35,9 @@ export async function save(post, authorUser) {
         } else { // new post
             created = await session.create('VERTEX', 'Post').set(post).one();
         }
+        console.log(`creating edge from ${authorUser['@rid']} to ${created['@rid']}`);
         await session.create('EDGE', 'Posted').from(authorUser['@rid']).to(created['@rid']).one();
-        session.commit();
+        // session.commit();
     } catch (error) {
         // await session.rollback();
         console.error(error)
@@ -54,7 +55,7 @@ export async function deleteById(id) {
 
 export async function findReplies(id) {
     const session = await pool.acquire();
-    const result = await session.query('SELECT expand(in("Replied")) FROM Post WHERE id = :id', {params: {id: id}}).all();
+    const result = await session.query('SELECT *, first(in(\'Posted\')).username AS authorUsername, first(in(\'Posted\')).displayName AS authorDisplayName FROM  (SELECT expand(in("Replied")) FROM Post WHERE id = :id)', {params: {id: id}}).all();
     await session.close();
     return result;
 }
@@ -99,14 +100,24 @@ export async function findWithPagination(page, limit) {
 
 export async function findNewestFromFollowedWithPagination(user, page, limit) {
     const session = await pool.acquire();
+//     const result = await session.query(
+//         `SELECT *, $author.username AS authorUsername, $author.displayName AS authorDisplayName FROM (SELECT expand(out('Posted'))
+//          FROM (SELECT expand(out('Follows'))
+//                FROM User
+//                WHERE @rid = :userRid) ORDER BY datePosted DESC LIMIT :limit
+// SKIP :
+//          offset) LET $author = first(in('Posted'))`,
+//         {
+//             params: {
+//                 userRid: user['@rid'],
+//                 limit: limit,
+//                 offset: page * limit
+//             }
+//         }).all()
     const result = await session.query(
-        `SELECT expand(out('Posted'))
-         FROM (SELECT expand(out('Follows'))
+        `SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName FROM (SELECT expand(out('Posted'))
                FROM User
-               WHERE @rid = :userRid)
-         ORDER BY datePosted DESC LIMIT :limit
-SKIP :
-         offset`,
+               WHERE :userRid IN in('Follows') ORDER BY datePosted DESC) WHERE out('Replied').size() = 0 LIMIT :limit`,
         {
             params: {
                 userRid: user['@rid'],
@@ -132,14 +143,14 @@ export async function findNewestFromRandomNonFollowedWithPagination(user, page, 
     // randomly choose up to amountOfUsers non-followed users
     const randomNotFollowedUsers = notFollowedUsers.sort(() => Math.random() - 0.5).slice(0, amountOfUsers);
     const postsPerUser = Math.max(Math.floor(postLimit / amountOfUsers), 1);
-    // select posts from non-followed users,
+    // select posts from non-followed users
     const notFollowedPosts = await session.query(
-        `SELECT expand(out('Posted'))
+        `SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName FROM (
+SELECT expand(out('Posted'))
                FROM User
                WHERE @rid IN :randomNotFollowedUsers
-         ORDER BY datePosted DESC LIMIT :postLimit
-        SKIP :
-         offset`,
+         ORDER BY datePosted DESC) WHERE out('Replied').size() = 0 LIMIT :postLimit
+        SKIP :offset`,
         {
             params: {
                 randomNotFollowedUsers: randomNotFollowedUsers.map(u => u['@rid']),
@@ -147,11 +158,6 @@ export async function findNewestFromRandomNonFollowedWithPagination(user, page, 
                 offset: page * postLimit
             }
         }).all()
-    // include user information in the result
-    const result = notFollowedPosts.map(post => {
-        post.author = notFollowedUsers.find(u => u['@rid'] === post.in);
-        return post;
-    });
     await session.close();
-    return result;
+    return notFollowedPosts;
 }

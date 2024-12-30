@@ -1,11 +1,12 @@
 export interface Post {
     id: string,
     body: string,
-    author: User,
+    authorUsername: string,
+    authorDisplayName: string,
     media?: string,
-    likesCount: number,
-    repliesCount: number,
-    parent?: Post,
+    likesCount?: number,
+    repliesCount?: number,
+    parent?: string,
     datePosted: Date,
     liked: boolean,
 }
