@@ -3,8 +3,9 @@ import type {Post} from "../../models.ts";
 import LikeIcon from "./LikeIcon.vue";
 import ReplyIcon from "./ReplyIcon.vue";
 import {computed} from "vue";
+import ProfileIcon from "./ProfileIcon.vue";
 
-const props = defineProps<{ post: Post }>()
+const props = defineProps<{ post: Post, isReply?: boolean }>()
 
 function likeOrUnlike() {
   props.post.liked = !props.post.liked;
@@ -21,12 +22,12 @@ const date = computed(() => {
 
 <template>
   <div class="post">
-    <div class="repliedTo" v-if="post.parent" >
+    <div class="repliedTo" v-if="post.parent && !isReply" >
       ...
     </div>
     <div class="actual-post" @click="$router.push(`/${post.id}`)">
     <div class="post-avatar">
-      <img src="/default-avatar.svg" alt="avatar" class="avatar" width="40"/>
+      <ProfileIcon/>
     </div>
     <div class="main-container">
       <div class="post-header-info">

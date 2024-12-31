@@ -46,3 +46,18 @@ export async function getReplies(postId: string, authToken: string) {
         return []
     }
 }
+
+export async function createPost(body: string, media: string, parent: string, authToken: string) {
+    try {
+        const data: any = {}
+        if (parent) data["parent"] = parent
+        if (body) data["body"] = body
+        if (media) data["media"] = media
+        const response = await axios.post(`${apiUrl}/posts`, data, {headers: {Authorization: `Bearer ${authToken}`}})
+        console.log("axios", response.data)
+        return {...response.data, datePosted: new Date(response.data.datePosted)}
+    } catch (error) {
+        console.error(error)
+        return null
+    }
+}

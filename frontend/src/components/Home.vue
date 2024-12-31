@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import Sidebar from "./home/Sidebar.vue";
 import FeedSwitcher from "./home/FeedSwitcher.vue";
 import Feed from "./home/Feed.vue";
 import {Feeds} from "../enums/feeds.enum.ts";

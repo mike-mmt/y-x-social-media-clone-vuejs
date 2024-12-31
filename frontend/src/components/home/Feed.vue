@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type {Feeds} from "../../enums/feeds.enum.ts";
-import Post from "./Post.vue";
-import type {Post as PostType, User} from "../../models.ts"
-import {inject, onMounted, reactive, type Ref, ref, watch} from "vue";
+import Post from "../post/Post.vue";
+import type {Post as PostType} from "../../models.ts"
+import {inject, onMounted, type Ref, ref, watch} from "vue";
 import {getForYouPosts} from "../../services/apiService.ts";
 defineProps<{ feed: Feeds; }>();
 // const post: PostType = reactive({

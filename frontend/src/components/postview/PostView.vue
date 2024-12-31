@@ -1,17 +1,20 @@
 <script setup lang="ts">
-import type {Post as PostType} from "../models.ts";
-import LikeIcon from "./home/LikeIcon.vue";
-import ReplyIcon from "./home/ReplyIcon.vue";
+import type {Post as PostType} from "../../models.ts";
+import LikeIcon from "../post/LikeIcon.vue";
+import ReplyIcon from "../post/ReplyIcon.vue";
 import {inject, onMounted, ref, type Ref, watch} from "vue";
 import {useRoute} from "vue-router";
-import {getPost} from "../services/apiService.ts";
-import Post from "./home/Post.vue";
+import {createPost, getPost, getReplies} from "../../services/apiService.ts";
+import Post from "../post/Post.vue";
+import ProfileIcon from "../post/ProfileIcon.vue";
+import WriteReply from "./WriteReply.vue";
 
 const post = ref<PostType | null>(null);
 const parentPost = ref<PostType | null>(null);
 const replies = ref<PostType[]>([]);
 
 const route = useRoute();
+// TODO implement like functionality
 // function likeOrUnlike() {
 //   props.post.liked = !props.post.liked;
 //   if (props.post.liked) {
@@ -31,7 +34,14 @@ async function fetchPost(authToken: string) {
         parentPost.value = parent;
       });
     }
-    // TODO: fetch replies
+    if (newPost['in_Replied']) {
+      getReplies(newPost.id, authToken).then((newReplies) => {
+        replies.value = newReplies;
+        console.log('replies', replies.value);
+      });
+    } else {
+      replies.value = [];
+    }
   });
 }
 
@@ -45,34 +55,57 @@ onMounted(async () => {
   }
 
 })
+
+function writeReply(body: string, media: string) {
+  if (post.value) {
+    createPost(body, media, post.value.id, authToken.value).then((newPost) => {
+      console.log(newPost);
+      replies.value.push(newPost);
+    });
+  }
+}
+
+watch(
+    () => route.params.id,
+    (newId, oldId) => {
+      console.log("detected change in route", newId, oldId)
+      fetchPost(authToken.value)
+    }
+)
 </script>
 
 <template>
   <div class="post">
-    <p class="back-post-btn">← Post</p>
+    <p class="back-post-btn" @click="$router.back">← Post</p>
     <div class="repliedTo" v-if="post && post.parent && parentPost">
-      <Post :post="parentPost" />
+      <Post :post="parentPost"/>
     </div>
-    <div class="actual-post">
-      <div class="post-avatar">
-        <img src="/default-avatar.svg" alt="avatar" class="avatar" width="40"/>
-      </div>
+    <div class="actual-post" v-if="post">
       <div class="main-container" v-if="post">
         <div class="post-header-info">
-          <h3 class="display-name">{{ post.authorDisplayName }}</h3>
-          <p class="username">@{{ post.authorUsername }}</p>
-          <p class="date">• {{ post.datePosted.toLocaleString('pl-PL') }}</p>
+          <ProfileIcon/>
+          <div class="names">
+            <h3 class="display-name">{{ post.authorDisplayName }}</h3>
+            <p class="username">@{{ post.authorUsername }}</p>
+          </div>
         </div>
         <div class="post-content">
           <p class="body">{{ post.body }}</p>
         </div>
-        <div class="post-footer">
-          <!--          <LikeIcon :liked="post.liked" @like-or-unlike=""/>-->
-          <p class="likes-count">{{ post.likesCount }}</p>
-          <!--          <ReplyIcon/>-->
-          <p class="replies-count">{{ post.repliesCount }}</p>
-        </div>
+
       </div>
+    </div>
+    <p class="date-footer" v-if="post">{{ post.datePosted.toLocaleString('pl-PL') }}</p>
+
+    <div class="post-footer" v-if="post">
+      <LikeIcon :liked="post.liked" @like-or-unlike=""/>
+      <p class="likes-count">{{ post.likesCount }}</p>
+      <ReplyIcon/>
+      <p class="replies-count">{{ post.repliesCount }}</p>
+    </div>
+    <WriteReply v-if="post" :replying-to="post.authorUsername" @post-reply="writeReply"/>
+    <div class="replies" v-if="replies.length > 0">
+      <Post v-for="reply in replies" :post="reply" :key="reply.id" :isReply="true"/>
     </div>
 
   </div>
@@ -122,23 +155,42 @@ onMounted(async () => {
       }
     }
   }
+
+  .date-footer {
+    border-top: 1px solid #747bff;
+    margin-left: 1rem;
+    padding: 1rem 0;
+
+    color: $color-less-important;
+  }
+
   .post-footer {
-    margin-top: 0.5rem;
-    margin-left: 0.5rem;
+    margin-left: 1rem;
+    padding: 1rem 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    border-top: 1px solid #747bff;
 
     :nth-child(2) {
       margin-right: 1rem;
     }
   }
+  .names {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
   .back-post-btn {
-    margin: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #747bff;
     color: $color-text;
+
     &:hover {
       cursor: pointer;
     }
   }
 }
+
 </style>
