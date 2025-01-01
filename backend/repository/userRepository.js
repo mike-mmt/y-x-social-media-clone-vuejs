@@ -11,12 +11,16 @@ export async function findAll() {
 
 export async function findById(id) {
     const session = await pool.acquire();
-    return await session.select().from('User').where({'id': id}).one();
+    const result = await session.select().from('User').where({'id': id}).one();
+    await session.close();
+    return result;
 }
 
 export async function findByUsername(username) {
     const session = await pool.acquire();
-    return await session.select().from('User').where({'username': username}).one();
+    const result = await session.select().from('User').where({'username': username}).one();
+    await session.close();
+    return result;
 }
 
 export async function save(user) {
@@ -63,9 +67,9 @@ export async function follow(follower, followedUsername) {
     if (existing) {
         throw new Error('Already following this user');
     } else {
-        console.log(follower['@rid'], followed['@rid'])
+        // console.log(follower['@rid'], followed['@rid'])
         const result = await session.create('EDGE', 'Follows').from(follower['@rid']).to(followed['@rid']).one();
-        console.log(result)
+        // console.log(result)
         session.commit();
     }
     await session.close();
@@ -103,7 +107,7 @@ export async function mute(muter, mutedUsername) {
         throw new Error('Already muted this user');
     }
     const result = await session.create('EDGE', 'Follows').from(muter['@rid']).to(muted['@rid']).one();
-    console.log(result)
+    // console.log(result)
     session.commit();
     await session.close();
 }
@@ -140,7 +144,7 @@ export async function block(blocker, blockedUsername) {
         throw new Error('Already blocked this user');
     }
     const result = await session.create('EDGE', 'Blocks').from(blocker['@rid']).to(blocked['@rid']).one();
-    console.log(result)
+    // console.log(result)
     session.commit();
     await session.close();
 }

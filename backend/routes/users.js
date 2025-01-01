@@ -63,7 +63,7 @@ router.delete('/:username', async (req, res) => {
 
 router.post('/:username/follow', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
-    const user = await req.user;
+    const user = req.user;
     try {
         await userRepo.follow(user, username);
         res.status(200).end();
@@ -74,7 +74,7 @@ router.post('/:username/follow', passport.authenticate('jwt', {session: false}),
 
 router.post('/:username/unfollow', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
-    const user = await req.user;
+    const user = req.user;
     try {
         await userRepo.unfollow(user, username);
         res.status(200).end();
@@ -85,7 +85,7 @@ router.post('/:username/unfollow', passport.authenticate('jwt', {session: false}
 
 router.post('/:username/mute', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
-    const user = await req.user;
+    const user = req.user;
     try {
         await userRepo.mute(user, username);
         res.status(200).end();
@@ -96,7 +96,7 @@ router.post('/:username/mute', passport.authenticate('jwt', {session: false}), a
 
 router.post('/:username/unmute', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
-    const user = await req.user;
+    const user = req.user;
     try {
         await userRepo.unmute(user, username);
         res.status(200).end();
@@ -107,7 +107,7 @@ router.post('/:username/unmute', passport.authenticate('jwt', {session: false}),
 
 router.post('/:username/block', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
-    const user = await req.user;
+    const user = req.user;
     try {
         await userRepo.block(user, username);
         res.status(200).end();
@@ -118,7 +118,7 @@ router.post('/:username/block', passport.authenticate('jwt', {session: false}), 
 
 router.post('/:username/unblock', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
-    const user = await req.user;
+    const user = req.user;
     try {
         await userRepo.block(user, username);
         res.status(200).end();

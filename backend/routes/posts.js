@@ -27,9 +27,10 @@ router.get('/', passport.authenticate('jwt', {session: false}), async (req, res)
     res.status(200).json(posts);
 });
 
-router.get('/id/:id', async (req, res) => {
+router.get('/id/:id', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const id = req.params.id;
-    const post = await postRepo.findById(id);
+    const user = req.user;
+    const post = await postRepo.findById(id, user);
     if (post) {
         res.status(200).json(post);
     } else {
@@ -43,7 +44,7 @@ router.post('/', passport.authenticate('jwt', {session: false}), async (req, res
         return res.status(400).json({message: error.message});
     }
     try {
-        const post = await postRepo.save(value, await req.user);
+        const post = await postRepo.save(value, req.user);
         res.status(201).json(post);
     } catch (e) {
         console.error(e);
@@ -69,8 +70,8 @@ router.post('/id/:id/replies', passport.authenticate('jwt', {session: false}), a
         return res.status(400).json({message: error.message});
     }
     try {
-        console.log(id, value)
-        const post = await postRepo.save({...value, parent: id}, await req.user);
+        // console.log(id, value)
+        const post = await postRepo.save({...value, parent: id}, req.user);
         res.status(201).json(post);
     } catch (e) {
         console.error(e);
@@ -92,7 +93,7 @@ router.delete('/id/:id', async (req, res) => {
 router.post('/id/:id/like', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const id = req.params.id;
     try {
-        const post = await postRepo.like(id, await req.user);
+        const post = await postRepo.like(id, req.user);
         res.status(200).json(post);
     } catch (e) {
         res.status(500).json({message: e.message});
@@ -102,7 +103,7 @@ router.post('/id/:id/like', passport.authenticate('jwt', {session: false}), asyn
 router.post('/id/:id/unlike', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const id = req.params.id;
     try {
-        const post = await postRepo.unlike(id, await req.user);
+        const post = await postRepo.unlike(id, req.user);
         res.status(200).json(post);
     } catch (e) {
         res.status(500).json({message: e.message});
@@ -111,7 +112,7 @@ router.post('/id/:id/unlike', passport.authenticate('jwt', {session: false}), as
 
 // advanced
 router.get('/followed', passport.authenticate('jwt', {session: false}), async (req, res) => {
-    const user = await req.user;
+    const user = req.user;
     let {page, limit, amountOfUsers} = req.query;
     page = parseInt(page) || 0;
     limit = Math.min(parseInt(limit) || 10, 100);
@@ -130,7 +131,7 @@ router.get('/nonfollowed', passport.authenticate('jwt', {session: false}), async
     page = parseInt(page) || 0;
     amountOfUsers = Math.min(parseInt(amountOfUsers) || 10, 100);
     limit = Math.min(parseInt(limit) || 10, 100);
-    const user = await req.user;
+    const user = req.user;
     try {
         // const posts = await postRepo.findNewestFromFollowedWithPagination(user, 0, 10);
         const posts = await postRepo.findNewestFromRandomNonFollowedWithPagination(user, page, limit, amountOfUsers);
@@ -148,7 +149,7 @@ router.get('/foryou', passport.authenticate('jwt', {session: false}), async (req
     // limit = Math.min(parseInt(limit) || 10, 100);
     const limit = 5;
     const amountOfUsers = limit;
-    const user = await req.user;
+    const user = req.user;
     try {
         const followedPosts = await postRepo.findNewestFromFollowedWithPagination(user, page, limit);
         const randomPosts = await postRepo.findNewestFromRandomNonFollowedWithPagination(user, page, limit, amountOfUsers);

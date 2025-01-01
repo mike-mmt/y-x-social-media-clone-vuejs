@@ -8,6 +8,12 @@ dotenv.config();
 import setupDatabaseConnection from "./setupDatabaseConnection.js";
 
 const app = express();
+
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+})
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.json());
 
@@ -63,9 +69,10 @@ try {
     const apiPort = process.env.PORT || 3000;
     const apiHost = process.env.API_HOST || 'localhost';
 
-    app.listen(apiPort, () => {
+    const server = app.listen(apiPort, () => {
         console.log(`Serwer działa na http://${apiHost}:${apiPort}`);
     });
+    server.setTimeout(1000 * 10); // 10 seconds
 
 } catch (err) {
     console.error(`Błąd połączenia z OrientDB: `, err);

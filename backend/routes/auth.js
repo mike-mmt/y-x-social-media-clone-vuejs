@@ -5,6 +5,7 @@ import * as userRepo from "../repository/userRepository.js";
 import bcrypt from 'bcryptjs';
 
 import express from 'express';
+import passport from 'passport';
 
 const secretKey = process.env.JWT_SECRET || 'JHM89asd0Y0A$$$HgbCF';
 
@@ -35,4 +36,8 @@ router.post('/login', async (req, res) => {
             error
         });
     }
+});
+
+router.post('/validate', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    res.status(200).json({message: 'success'});
 });

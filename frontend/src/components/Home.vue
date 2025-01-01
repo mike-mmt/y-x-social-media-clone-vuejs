@@ -3,14 +3,10 @@
 import FeedSwitcher from "./home/FeedSwitcher.vue";
 import Feed from "./home/Feed.vue";
 import {Feeds} from "../enums/feeds.enum.ts";
-import {ref} from "vue";
+import {inject, type Ref} from "vue";
 import WritePost from "./home/WritePost.vue";
 
-const feed = ref(Feeds.ForYou);
-
-function switchFeed(newFeed: Feeds) {
-  feed.value = newFeed;
-}
+const {feed, switchFeed} = inject("feed") as {feed: Ref<Feeds>, switchFeed: (newFeed: Feeds) => void};
 </script>
 
 <template>

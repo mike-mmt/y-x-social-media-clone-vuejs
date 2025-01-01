@@ -4,11 +4,13 @@ export interface Post {
     authorUsername: string,
     authorDisplayName: string,
     media?: string,
-    likesCount?: number,
-    repliesCount?: number,
+    likesCount: number,
+    repliesCount: number,
     parent?: string,
     datePosted: Date,
-    liked: boolean,
+    hasLiked: {
+        hasLiked: number,
+    }
 }
 export interface User {
     username: string,

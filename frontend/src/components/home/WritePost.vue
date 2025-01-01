@@ -1,9 +1,11 @@
 <script setup lang="ts">
 
+import ProfileIcon from "../post/ProfileIcon.vue";
 </script>
 
 <template>
   <div class="write-post">
+    <ProfileIcon />
     <textarea class="post-body" placeholder="What's on your mind?"></textarea>
     <button class="post-btn">Post</button>
   </div>
@@ -15,6 +17,7 @@
   justify-content: center;
   align-items: center;
   max-width: 50%;
+  gap: 1rem;
 }
 .post-body {
   background-color: $color-tertiary;
@@ -27,7 +30,6 @@
   color: $color-text;
   border: none;
   padding: 0.5rem 1rem;
-  margin: 0.5rem 1rem;
   border-radius: 0.5rem;
   transition: all 300ms;
   &:hover {

@@ -1,38 +1,55 @@
 <script setup lang="ts">
-import type {Feeds} from "../../enums/feeds.enum.ts";
+import {Feeds} from "../../enums/feeds.enum.ts";
 import Post from "../post/Post.vue";
 import type {Post as PostType} from "../../models.ts"
 import {inject, onMounted, type Ref, ref, watch} from "vue";
-import {getForYouPosts} from "../../services/apiService.ts";
-defineProps<{ feed: Feeds; }>();
-// const post: PostType = reactive({
-//   id: "abc1",
-//   body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-//   author: {
-//     username: "reinerbraun",
-//     displayName: "Reiner Braun",
-//     dateCreated: new Date(new Date().setFullYear(2024, 11, 20)),
-//   } as User,
-//   datePosted: new Date(),
-//   likesCount: 0,
-//   repliesCount: 0,
-//   liked: false,
-// } as PostType);
+import {getFollowingPosts, getForYouPosts, likePost, unlikePost} from "../../services/apiService.ts";
 
+const props = defineProps<{ feed: Feeds; }>();
 const posts = ref([] as PostType[]);
 const { authToken } = inject<{ authToken: Ref<string, string> }>("authToken", {authToken: ref("")});
 
-onMounted(() => {
-  if (authToken.value !== "") {
+async function fetchPosts() {
+  if (props.feed === Feeds.ForYou) {
     getForYouPosts(0, authToken.value).then((newPosts) => {
-      console.log(newPosts);
       posts.value = newPosts;
     });
+  } else if (props.feed === Feeds.Following) {
+    getFollowingPosts(0, authToken.value).then((newPosts) => {
+      posts.value = newPosts;
+    });
+  }
+  console.log(posts.value);
+}
+
+async function likeOrUnlike(postId: string) {
+  const post = posts.value.find((p) => p.id === postId);
+  if (post && post.hasLiked.hasLiked > 0) {
+    await unlikePost(post.id, authToken.value).then(() => {
+      post.hasLiked.hasLiked = 0;
+      post.likesCount--;
+      // fetchPost(authToken.value);
+    });
+  } else if (post) {
+    await likePost(post!.id, authToken.value).then(() => {
+      post.hasLiked.hasLiked = 1;
+      post.likesCount++;
+      // fetchPost(authToken.value);
+    });
+  }
+}
+
+watch(() => props.feed, async () => {
+  fetchPosts();
+});
+
+onMounted(() => {
+  if (authToken.value !== "") {
+    fetchPosts();
   } else {
   watch(authToken, async (newToken: string) => {
     if (newToken) {
       getForYouPosts(0, newToken).then((newPosts) => {
-        console.log(newPosts);
         posts.value = newPosts;
       });
     }
@@ -47,7 +64,7 @@ onMounted(() => {
 
 <template>
   <div class="feed">
-    <Post v-for="post in posts" :post="post" :key="post.id" />
+    <Post v-for="post in posts" :post="post" :key="post.id" @like-or-unlike="likeOrUnlike"/>
   </div>
 </template>
 

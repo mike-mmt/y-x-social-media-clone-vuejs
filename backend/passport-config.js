@@ -23,7 +23,7 @@ const opts = {
 passport.use(
     new Strategy(opts, async (payload, done) => {
         try {
-            const user = userRepo.findById(payload.userId);
+            const user = await userRepo.findById(payload.userId);
             if (user) return done(null, user);
         } catch (error) {
             return done(error);

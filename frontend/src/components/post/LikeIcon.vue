@@ -3,8 +3,8 @@ defineProps<{liked: boolean}>();
 </script>
 
 <template>
-    <img src="/heart-full-png.png" v-if="liked" alt="Liked" @click="$emit('like-or-unlike')" height="25px" width="25px">
-    <svg @click="$emit('like-or-unlike')" v-else class="unliked" fill="#ffffff" height="25px" width="25px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    <img @click.stop="$emit('like-or-unlike')" src="/heart-full-png.png" v-if="liked" alt="Liked" height="25px" width="25px">
+    <svg @click.stop="$emit('like-or-unlike')" v-else class="unliked" fill="#ffffff" height="25px" width="25px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
          viewBox="0 0 471.701 471.701" xml:space="preserve">
           <g>
             <path d="M433.601,67.001c-24.7-24.7-57.4-38.2-92.3-38.2s-67.7,13.6-92.4,38.3l-12.9,12.9l-13.1-13.1

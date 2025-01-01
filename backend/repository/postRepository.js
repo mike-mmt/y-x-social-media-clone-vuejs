@@ -11,9 +11,9 @@ export async function findAll() {
     return result;
 }
 
-export async function findById(id) {
+export async function findById(id, user) {
     const session = await pool.acquire();
-    return await session.query(`SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName FROM Post WHERE id = :id`, {params: {id: id}}).one();
+    return await session.query(`SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName, in('Likes').size() AS likesCount, in('Replied').size() AS repliesCount, first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)) AS hasLiked FROM Post WHERE id = :id`, {params: {id: id, userRid: user['@rid']}}).one();
 }
 
 export async function save(post, authorUser) {
@@ -24,7 +24,6 @@ export async function save(post, authorUser) {
     let created;
     try {
         if ('parent' in post) { // reply to a post
-            console.log(post.parent)
             const parent = await session.select().from('Post').where({'id': post.parent}).one();
             if (parent) {
                 created = await session.create('VERTEX', 'Post').set(post).one();
@@ -35,7 +34,7 @@ export async function save(post, authorUser) {
         } else { // new post
             created = await session.create('VERTEX', 'Post').set(post).one();
         }
-        console.log(`creating edge from ${authorUser['@rid']} to ${created['@rid']}`);
+        // console.log(`creating edge from ${authorUser['@rid']} to ${created['@rid']}`);
         await session.create('EDGE', 'Posted').from(authorUser['@rid']).to(created['@rid']).one();
         // session.commit();
     } catch (error) {
@@ -55,7 +54,7 @@ export async function deleteById(id) {
 
 export async function findReplies(id) {
     const session = await pool.acquire();
-    const result = await session.query('SELECT *, first(in(\'Posted\')).username AS authorUsername, first(in(\'Posted\')).displayName AS authorDisplayName FROM  (SELECT expand(in("Replied")) FROM Post WHERE id = :id)', {params: {id: id}}).all();
+    const result = await session.query('SELECT *, first(in(\'Posted\')).username AS authorUsername, first(in(\'Posted\')).displayName AS authorDisplayName, in(\'Likes\').size() AS likesCount, in(\'Replied\').size() AS repliesCount, first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in(\'Likes\')) FROM $current) WHERE @rid = :userRid)) AS hasLiked  FROM  (SELECT expand(in("Replied")) FROM Post WHERE id = :id)', {params: {id: id}}).all();
     await session.close();
     return result;
 }
@@ -115,9 +114,9 @@ export async function findNewestFromFollowedWithPagination(user, page, limit) {
 //             }
 //         }).all()
     const result = await session.query(
-        `SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName FROM (SELECT expand(out('Posted'))
+        `SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName, in('Likes').size() AS likesCount, in('Replied').size() AS repliesCount, first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)) AS hasLiked FROM (SELECT expand(out('Posted'))
                FROM User
-               WHERE :userRid IN in('Follows') ORDER BY datePosted DESC) WHERE out('Replied').size() = 0 LIMIT :limit`,
+                WHERE :userRid IN in('Follows') ORDER BY datePosted DESC) WHERE out('Replied').size() = 0 LIMIT :limit`,
         {
             params: {
                 userRid: user['@rid'],
@@ -145,7 +144,7 @@ export async function findNewestFromRandomNonFollowedWithPagination(user, page, 
     const postsPerUser = Math.max(Math.floor(postLimit / amountOfUsers), 1);
     // select posts from non-followed users
     const notFollowedPosts = await session.query(
-        `SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName FROM (
+        `SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName, in('Likes').size() AS likesCount, in('Replied').size() AS repliesCount, first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)) AS hasLiked FROM (
 SELECT expand(out('Posted'))
                FROM User
                WHERE @rid IN :randomNotFollowedUsers

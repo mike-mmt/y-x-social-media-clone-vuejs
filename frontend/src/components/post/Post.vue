@@ -7,14 +7,6 @@ import ProfileIcon from "./ProfileIcon.vue";
 
 const props = defineProps<{ post: Post, isReply?: boolean }>()
 
-function likeOrUnlike() {
-  props.post.liked = !props.post.liked;
-  if (props.post.liked) {
-    // props.post.likesCount++;
-  } else {
-    // props.post.likesCount--;
-  }
-}
 const date = computed(() => {
   return props.post.datePosted.toLocaleString('pl-PL');
 })
@@ -39,7 +31,7 @@ const date = computed(() => {
         <p class="body">{{ post.body }}</p>
       </div>
       <div class="post-footer">
-        <LikeIcon :liked="post.liked" @like-or-unlike="likeOrUnlike"/>
+        <LikeIcon :liked="post.hasLiked.hasLiked > 0" @like-or-unlike="$emit('like-or-unlike', props.post.id)"/>
         <p class="likes-count">{{ post.likesCount }}</p>
         <ReplyIcon/>
         <p class="replies-count">{{ post.repliesCount }}</p>
