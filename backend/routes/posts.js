@@ -175,4 +175,16 @@ router.get('/my', passport.authenticate('jwt', {session: false}), async (req, re
     }
 });
 
+router.get('/user/:username', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const username = req.params.username;
+    const page = parseInt(req.query.page) || 0;
+    const user = req.user;
+    try {
+        const posts = await postRepo.findUserPosts(username, user, page, 10);
+        res.status(200).json(posts);
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
 export default router;

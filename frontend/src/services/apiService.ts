@@ -260,3 +260,18 @@ export async function getBlocked(username: string, authToken: string) {
         return []
     }
 }
+
+export async function getUserPosts(username: string, page: number, authToken: string) {
+    try {
+        const response = await axios.get(`${apiUrl}/posts/user/${username}`, {
+            headers: {Authorization: `Bearer ${authToken}`},
+            params: {page}
+        });
+        return response.data.map((post: any) => {
+            return {...post, datePosted: new Date(post.datePosted)}
+        })
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}

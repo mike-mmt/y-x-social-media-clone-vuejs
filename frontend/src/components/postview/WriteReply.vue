@@ -7,14 +7,17 @@ const props = defineProps<{
 }>()
 const isFocused = ref(false);
 const replyBody = ref("");
+const media = ref("");
+const showMedia = ref(false);
+
 
 const emit = defineEmits(['post-reply']);
 
 function onClickReply() {
-  emit('post-reply', replyBody.value);
+  emit('post-reply', replyBody.value, media.value);
   replyBody.value = "";
+  media.value = "";
 }
-// TODO add mediacd
 </script>
 
 <template>
@@ -24,8 +27,16 @@ function onClickReply() {
       }}</span></p>
     <div class="center">
       <ProfileIcon/>
-      <textarea v-model="replyBody" class="reply-text" placeholder="Post your reply" @focus="isFocused = true"
-                @blur="isFocused = false"></textarea>
+      <div class="body-media">
+      <textarea v-model="replyBody" class="reply-text" placeholder="Post your reply" @blur="isFocused = false"
+                @focus="() => {isFocused = true; showMedia = true;}"></textarea>
+      <input v-model="media" v-if="showMedia" :class="{ 'has-content': media.length > 0 }" class="post-p post-media"
+             placeholder="link..."
+             type="url"
+             @blur="isFocused = false"
+             @focus="isFocused = true">
+
+      </div>
       <button class="reply-button" @click="onClickReply">Reply</button>
     </div>
   </div>
@@ -45,15 +56,18 @@ function onClickReply() {
 }
 
 .replying-to {
+  color: $color-text;
+}
+.replying-to-username {
   color: $color-green;
 }
-
 .reply-text {
   border-radius: 0.5rem;
   border: none;
   width: 100%;
   height: 4rem;
-  margin: 1rem 0;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
   padding: 0.5rem;
   background-color: $color-secondary;
   color: $color-text;
@@ -85,5 +99,36 @@ function onClickReply() {
   &:active {
     transform: scale(0.95);
   }
+}
+.body-media {
+  flex: 1;
+  transition-property: all;
+  transition-duration: 500ms;
+  transition-timing-function: ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.post-media {
+  background-color: $color-secondary;
+  color: $color-text;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  width: 100%;
+  transition-property: all;
+  transition-duration: 300ms;
+  outline: none;
+  border: 1px solid transparent;
+  &:focus {
+    outline: none;
+    border: 1px solid $color-green;
+  }
+  //&:focus {
+  //  width: 100%;
+  //}
+  //&.has-content {
+  //  width: 100%;
+  //}
 }
 </style>

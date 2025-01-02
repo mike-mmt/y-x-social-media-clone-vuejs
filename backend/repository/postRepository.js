@@ -192,3 +192,22 @@ export async function findMyPosts(user, page, limit) {
     await session.close();
     return result;
 }
+
+export async function findUserPosts(username, user, page, limit) {
+    const session = await pool.acquire();
+    const result = await session.query(
+        `SELECT ${POST_PROJECTION}
+         FROM (SELECT expand(out ('Posted'))
+             FROM User
+             WHERE username = :username ORDER BY datePosted DESC LIMIT :limit SKIP : offset)`,
+        {
+            params: {
+                username: username,
+                userRid: user['@rid'],
+                limit: limit,
+                offset: page * limit
+            }
+        }).all()
+    await session.close();
+    return result;
+}

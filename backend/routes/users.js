@@ -1,6 +1,7 @@
 import express from 'express';
 import Joi from 'joi';
 import * as userRepo from '../repository/userRepository.js';
+import * as postRepo from '../repository/postRepository.js';
 import passport from 'passport';
 import bcrypt from 'bcryptjs';
 

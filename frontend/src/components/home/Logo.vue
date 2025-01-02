@@ -3,9 +3,9 @@
 </script>
 
 <template>
-<a href="/">
+<RouterLink to="/">
   <img src="/logo.png" class="logo" alt="Y Logo"  width="150"/>
-</a>
+</RouterLink>
 </template>
 
 <style scoped>

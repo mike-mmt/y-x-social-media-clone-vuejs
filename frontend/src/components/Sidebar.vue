@@ -13,10 +13,12 @@ const props = defineProps<{ logout: () => void }>();
 <template>
   <div class="sidebar">
     <Logo />
-    <div v-if="user" class="me" @click="$router.push('/me')">
-      <ProfileIcon />
-      <p  class="me-profile">My Profile</p>
-    </div>
+    <RouterLink style="text-decoration: none" to="/me">
+      <div v-if="user" class="me" @click="$router.push('/me')">
+        <ProfileIcon />
+        <p  class="me-profile">{{user.displayName}}</p>
+      </div>
+    </RouterLink>
     <div v-if="user" class="logout" @click="props.logout">Log out</div>
   </div>
 </template>
@@ -33,6 +35,7 @@ const props = defineProps<{ logout: () => void }>();
   border-right: 1px solid $color-border;
   padding-right: 1rem;
   margin-right: 2rem;
+  min-width: 15%;
 }
 .me {
   background-color: $color-secondary;

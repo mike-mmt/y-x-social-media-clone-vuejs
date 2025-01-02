@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {inject, onMounted, provide, type Ref, ref, watch} from "vue";
-import {getMyUser, getUser, validateToken} from "./services/apiService.ts";
+import {getMyUser, validateToken} from "./services/apiService.ts";
 import Sidebar from "./components/Sidebar.vue";
 import type {VueCookies} from "vue-cookies";
 import {Feeds} from "./enums/feeds.enum.ts";

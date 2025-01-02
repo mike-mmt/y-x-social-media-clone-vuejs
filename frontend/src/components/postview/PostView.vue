@@ -169,10 +169,11 @@ watch(
       <Post :post="parentPost"/>
     </div>
     <div class="actual-post" v-if="post">
+      <p class="replying-to" v-if="post && post.parent && parentPost">Replying to: <span class="replying-to-username">@{{ parentPost.authorUsername }}</span></p>
       <div class="main-container" v-if="post">
         <div class="post-header-info">
           <ProfileIcon/>
-          <div class="names">
+          <div class="names" @click.stop="$router.push(`/user/${post.authorUsername}`)">
             <h3 class="display-name">{{ post.authorDisplayName }}</h3>
             <p class="username">@{{ post.authorUsername }}</p>
           </div>
@@ -215,19 +216,18 @@ watch(
   //padding: 1rem;
   border: 1px solid #747bff;
   border-radius: 0.5rem;
-  margin-top: 1rem;
   //gap: 1rem;
   .actual-post {
     display: flex;
     padding: 1rem;
-    gap: 0.5rem;
+    gap: 1rem;
+    flex-direction: column;
   }
 
   .repliedTo {
     padding: 0.5rem;
     border-bottom: 1px solid #747bff;
     //border-radius: 0.5rem;
-    margin-bottom: 0.5rem;
   }
 
   .main-container {
@@ -290,5 +290,11 @@ watch(
 
 .divider {
   flex: 1;
+}
+.replying-to {
+  color: $color-text;
+}
+.replying-to-username {
+  color: $color-green;
 }
 </style>
