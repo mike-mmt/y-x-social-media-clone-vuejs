@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import {inject, onMounted, provide, ref} from "vue";
-import {validateToken} from "./services/apiService.ts";
-import Sidebar from "./components/home/Sidebar.vue";
+import {inject, onMounted, provide, type Ref, ref, watch} from "vue";
+import {getMyUser, getUser, validateToken} from "./services/apiService.ts";
+import Sidebar from "./components/Sidebar.vue";
 import type {VueCookies} from "vue-cookies";
 import {Feeds} from "./enums/feeds.enum.ts";
 import {useRouter} from "vue-router";
+import type {User} from "./models.ts";
 
 const $cookies = inject<VueCookies>('$cookies');
 
@@ -14,19 +15,29 @@ const $cookies = inject<VueCookies>('$cookies');
 //   $cookies!.set("authToken", token);
 // };
 // provide("authToken", {authToken, setAuthToken});
-const {setAuthToken} = inject("authToken") as { setAuthToken: (token: string, cookies: VueCookies) => void };
+const {authToken, setAuthToken} = inject("authToken") as { authToken: Ref<string>, setAuthToken: (token: string, cookies: VueCookies) => void };
 const router = useRouter();
 
 const feed = ref(Feeds.ForYou);
+const user = ref<User | null>(null);
+
+provide("user", user);
 
 function switchFeed(newFeed: Feeds) {
   feed.value = newFeed;
 }
 provide("feed", {feed, switchFeed});
 
+watch(authToken, (newToken) => {
+  if (newToken) {
+    getMyUser(newToken).then((newUser) => {
+      user.value = newUser;
+    });
+  }
+});
+
 onMounted(() => {
   const token = $cookies!.get("authToken");
-
   if (token) {
     validateToken(token).then((isValid) => {
       if (isValid) {
@@ -39,7 +50,6 @@ onMounted(() => {
   } else {
     router.push("/login");
   }
-
 });
 </script>
 

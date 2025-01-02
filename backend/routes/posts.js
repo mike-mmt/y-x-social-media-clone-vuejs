@@ -18,7 +18,7 @@ const postSchema = Joi.object({
     body: Joi.string().min(1),
     media: Joi.string().min(1).uri(),
     parent: Joi.string(),
-}).xor('body', 'media');
+}).or('body', 'media');
 
 // routes
 router.get('/', passport.authenticate('jwt', {session: false}), async (req, res) => {
@@ -79,7 +79,7 @@ router.post('/id/:id/replies', passport.authenticate('jwt', {session: false}), a
     }
 });
 
-router.delete('/id/:id', async (req, res) => {
+router.delete('/id/:id', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const id = req.params.id;
     try {
         await postRepo.deleteById(id);
@@ -154,6 +154,21 @@ router.get('/foryou', passport.authenticate('jwt', {session: false}), async (req
         const followedPosts = await postRepo.findNewestFromFollowedWithPagination(user, page, limit);
         const randomPosts = await postRepo.findNewestFromRandomNonFollowedWithPagination(user, page, limit, amountOfUsers);
         res.status(200).json([...followedPosts, ...randomPosts]);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({message: e.message});
+    }
+});
+
+router.get('/my', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const user = req.user;
+    let {page} = req.query;
+    let limit = 10;
+    page = parseInt(page) || 0;
+    // limit = Math.min(parseInt(limit) || 10, 100);
+    try {
+        const posts = await postRepo.findMyPosts(user, page, limit);
+        res.status(200).json(posts);
     } catch (e) {
         console.error(e);
         res.status(500).json({message: e.message});

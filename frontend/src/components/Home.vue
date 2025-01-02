@@ -3,18 +3,32 @@
 import FeedSwitcher from "./home/FeedSwitcher.vue";
 import Feed from "./home/Feed.vue";
 import {Feeds} from "../enums/feeds.enum.ts";
-import {inject, type Ref} from "vue";
+import {inject, ref, type Ref} from "vue";
 import WritePost from "./home/WritePost.vue";
+import {createPost} from "../services/apiService.ts";
 
 const {feed, switchFeed} = inject("feed") as {feed: Ref<Feeds>, switchFeed: (newFeed: Feeds) => void};
+const { authToken } = inject('authToken') as { authToken: Ref<string> }
+const feedRef = ref()
+
+async function writePost(body: string, media: string) {
+  const post = await createPost(body, media, "", authToken.value)
+  console.log(post)
+  if (feed.value === Feeds.MyPosts) {
+    feedRef.value.addUserPost(post)
+  } else {
+    switchFeed(Feeds.MyPosts)
+  }
+  // feedRef.value.addUserPost(post)
+}
 </script>
 
 <template>
 
     <div class="main">
       <FeedSwitcher class="feed-switcher" @switch-feed="switchFeed" :feed="feed"/>
-      <WritePost/>
-      <Feed :feed="feed"/>
+      <WritePost @write-post="writePost"/>
+      <Feed :feed="feed" ref="feedRef"/>
     </div>
 
 </template>
@@ -32,15 +46,12 @@ const {feed, switchFeed} = inject("feed") as {feed: Ref<Feeds>, switchFeed: (new
   flex: 1;
   max-width: 60%;
   min-width: fit-content;
-  border-left: 1px solid $color-border;
-  padding-left: 2rem;
-  margin-left: 2rem;
   > * {
     width: 100%
   }
-  > *:not(:last-child) {
-    border-bottom: 1px solid $color-secondary;
-  }
+  //> *:not(:last-child) {
+  //  border-bottom: 1px solid $color-secondary;
+  //}
 }
 
 Sidebar {

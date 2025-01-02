@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const apiUrl = 'http://localhost:3000/api'
+const apiUrl = import.meta.env.VITE_API_URL as string;
 
 export async function getAuthToken(username: string, password: string): Promise<string> {
     try {
@@ -30,6 +30,21 @@ export async function getForYouPosts(page: number, authToken: string) {
 export async function getFollowingPosts(page: number, authToken: string) {
     try {
         const response = await axios.get(`${apiUrl}/posts/followed`, {
+            headers: {Authorization: `Bearer ${authToken}`},
+            params: {page}
+        });
+        return response.data.map((post: any) => {
+            return {...post, datePosted: new Date(post.datePosted)}
+        })
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
+export async function getMyPosts(page: number, authToken: string) {
+    try {
+        const response = await axios.get(`${apiUrl}/posts/my`, {
             headers: {Authorization: `Bearer ${authToken}`},
             params: {page}
         });
@@ -115,5 +130,85 @@ export async function unlikePost(postId: string, authToken: string) {
     } catch (error) {
         console.error(error)
         return false
+    }
+}
+
+export async function getUser(username: string, authToken: string) {
+    try {
+        const response = await axios.get(`${apiUrl}/users/${username}`, {headers: {Authorization: `Bearer ${authToken}`}})
+        return response.data
+    } catch (error) {
+        console.error(error)
+        return null
+    }
+}
+
+export async function followUser(username: string, authToken: string) {
+    try {
+        const response = await axios.post(`${apiUrl}/users/${username}/follow`, null, {headers: {Authorization: `Bearer ${authToken}`}})
+        return response.status === 200;
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+
+export async function unfollowUser(username: string, authToken: string) {
+    try {
+        const response = await axios.post(`${apiUrl}/users/${username}/unfollow`, null, {headers: {Authorization: `Bearer ${authToken}`}})
+        return response.status === 200;
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+
+export async function muteUser(username: string, authToken: string) {
+    try {
+        const response = await axios.post(`${apiUrl}/users/${username}/mute`, null, {headers: {Authorization: `Bearer ${authToken}`}})
+        return response.status === 200;
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+
+export async function unmuteUser(username: string, authToken: string) {
+    try {
+        const response = await axios.post(`${apiUrl}/users/${username}/unmute`, null, {headers: {Authorization: `Bearer ${authToken}`}})
+        return response.status === 200;
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+
+export async function blockUser(username: string, authToken: string) {
+    try {
+        const response = await axios.post(`${apiUrl}/users/${username}/block`, null, {headers: {Authorization: `Bearer ${authToken}`}})
+        return response.status === 200;
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+
+export async function unblockUser(username: string, authToken: string) {
+    try {
+        const response = await axios.post(`${apiUrl}/users/${username}/unblock`, null, {headers: {Authorization: `Bearer ${authToken}`}})
+        return response.status === 200;
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+
+export async function getMyUser(authToken: string) {
+    try {
+        const response = await axios.get(`${apiUrl}/users/me`, {headers: {Authorization: `Bearer ${authToken}`}});
+        return response.data;
+    } catch (error) {
+        console.error(error)
+        return null
     }
 }

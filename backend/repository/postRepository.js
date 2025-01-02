@@ -4,6 +4,12 @@ import * as crypto from 'node:crypto';
 
 import {pool} from './configRepos.js';
 
+const POST_PROJECTION = `*, first(in('Posted')).username AS authorUsername,
+ first(in('Posted')).displayName AS authorDisplayName,
+  in('Likes').size() AS likesCount,
+   in('Replied').size() AS repliesCount,
+    first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)).hasLiked AS hasLiked`;
+
 export async function findAll() {
     const session = await pool.acquire();
     const result = await session.query(`SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName FROM Post`).all();
@@ -13,7 +19,9 @@ export async function findAll() {
 
 export async function findById(id, user) {
     const session = await pool.acquire();
-    return await session.query(`SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName, in('Likes').size() AS likesCount, in('Replied').size() AS repliesCount, first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)) AS hasLiked FROM Post WHERE id = :id`, {params: {id: id, userRid: user['@rid']}}).one();
+    const result = await session.query(`SELECT ${POST_PROJECTION} FROM Post WHERE id = :id`, {params: {id: id, userRid: user['@rid']}}).one();
+    await session.close();
+    return result;
 }
 
 export async function save(post, authorUser) {
@@ -44,17 +52,24 @@ export async function save(post, authorUser) {
     } finally {
         await session.close();
     }
+    created['authorUsername'] = authorUser.username;
+    created['authorDisplayName'] = authorUser.displayName;
+    created['likesCount'] = 0;
+    created['repliesCount'] = 0;
+    created['hasLiked'] = 0;
     return created;
 }
 
 export async function deleteById(id) {
     const session = await pool.acquire();
-    return await session.delete('VERTEX', 'Post').where({'id': id}).one();
+    const result = await session.delete('VERTEX', 'Post').where({'id': id}).one();
+    await session.close();
+    return result;
 }
 
 export async function findReplies(id) {
     const session = await pool.acquire();
-    const result = await session.query('SELECT *, first(in(\'Posted\')).username AS authorUsername, first(in(\'Posted\')).displayName AS authorDisplayName, in(\'Likes\').size() AS likesCount, in(\'Replied\').size() AS repliesCount, first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in(\'Likes\')) FROM $current) WHERE @rid = :userRid)) AS hasLiked  FROM  (SELECT expand(in("Replied")) FROM Post WHERE id = :id)', {params: {id: id}}).all();
+    const result = await session.query(`SELECT ${POST_PROJECTION} FROM  (SELECT expand(in("Replied")) FROM Post WHERE id = :id)`, {params: {id: id}}).all();
     await session.close();
     return result;
 }
@@ -114,9 +129,9 @@ export async function findNewestFromFollowedWithPagination(user, page, limit) {
 //             }
 //         }).all()
     const result = await session.query(
-        `SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName, in('Likes').size() AS likesCount, in('Replied').size() AS repliesCount, first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)) AS hasLiked FROM (SELECT expand(out('Posted'))
+        `SELECT ${POST_PROJECTION} FROM (SELECT expand(out('Posted'))
                FROM User
-                WHERE :userRid IN in('Follows') ORDER BY datePosted DESC) WHERE out('Replied').size() = 0 LIMIT :limit`,
+                WHERE :userRid IN in('Follows') ORDER BY datePosted DESC) WHERE out('Replied').size() = 0 LIMIT :limit SKIP :offset`,
         {
             params: {
                 userRid: user['@rid'],
@@ -132,19 +147,18 @@ export async function findNewestFromRandomNonFollowedWithPagination(user, page, 
     const session = await pool.acquire();
     // randomly select 5 non-followed users
     const notFollowedUsers = await session.query(`
-                SELECT
-                FROM User
-                WHERE @rid NOT IN (SELECT in
-                FROM Follows
-                WHERE out = :userRid) AND @rid != :userRid`,
+        SELECT FROM User 
+        WHERE @rid NOT IN (SELECT in FROM Follows WHERE out = #58:0)
+        AND @rid != #58:0
+        AND #58:0 NOT IN in('Muted')
+        AND #58:0 NOT IN in('Blocked')`,
         {params: {userRid: user['@rid']}}).all();
-
     // randomly choose up to amountOfUsers non-followed users
     const randomNotFollowedUsers = notFollowedUsers.sort(() => Math.random() - 0.5).slice(0, amountOfUsers);
     const postsPerUser = Math.max(Math.floor(postLimit / amountOfUsers), 1);
     // select posts from non-followed users
     const notFollowedPosts = await session.query(
-        `SELECT *, first(in('Posted')).username AS authorUsername, first(in('Posted')).displayName AS authorDisplayName, in('Likes').size() AS likesCount, in('Replied').size() AS repliesCount, first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)) AS hasLiked FROM (
+        `SELECT ${POST_PROJECTION} FROM (
 SELECT expand(out('Posted'))
                FROM User
                WHERE @rid IN :randomNotFollowedUsers
@@ -159,4 +173,22 @@ SELECT expand(out('Posted'))
         }).all()
     await session.close();
     return notFollowedPosts;
+}
+
+export async function findMyPosts(user, page, limit) {
+    const session = await pool.acquire();
+    const result = await session.query(
+        `SELECT ${POST_PROJECTION}
+         FROM (SELECT expand(out ('Posted'))
+             FROM User
+             WHERE @rid = :userRid ORDER BY datePosted DESC LIMIT :limit SKIP : offset)`,
+        {
+            params: {
+                userRid: user['@rid'],
+                limit: limit,
+                offset: page * limit
+            }
+        }).all()
+    await session.close();
+    return result;
 }

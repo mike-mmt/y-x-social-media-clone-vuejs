@@ -8,12 +8,17 @@ dotenv.config();
 import setupDatabaseConnection from "./setupDatabaseConnection.js";
 
 const app = express();
+const server = https.createServer({
+    key: fs.readFileSync('./ssl/my.key'),
+    cert: fs.readFileSync('./ssl/my.crt')
+}, app);
 
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 })
 
+app.use(cors())
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.json());
 
@@ -55,6 +60,14 @@ import {config as configRepos} from "./repository/configRepos.js";
 import passport from 'passport';
 import {initDatabase} from './repository/init.js';
 
+
+// Dodajemy serwer HTTPS
+import fs from 'fs';
+
+import https from 'https';
+
+import cors from 'cors';
+
 try {
     // setup db
     const { client, pool } = await setupDatabaseConnection(orientConfig);
@@ -69,7 +82,7 @@ try {
     const apiPort = process.env.PORT || 3000;
     const apiHost = process.env.API_HOST || 'localhost';
 
-    const server = app.listen(apiPort, () => {
+    server.listen(apiPort, () => {
         console.log(`Serwer działa na http://${apiHost}:${apiPort}`);
     });
     server.setTimeout(1000 * 10); // 10 seconds

@@ -8,15 +8,16 @@ export interface Post {
     repliesCount: number,
     parent?: string,
     datePosted: Date,
-    hasLiked: {
-        hasLiked: number,
-    }
+    hasLiked: number,
 }
 export interface User {
     username: string,
     displayName: string,
     dateCreated: Date,
-    following?: User[],
-    muted?: User[],
-    blocked?: User[],
+    isFollowing: number,
+    isMuted: number,
+    isBlocked: number,
+    followingCount: number,
+    followersCount: number,
+
 }

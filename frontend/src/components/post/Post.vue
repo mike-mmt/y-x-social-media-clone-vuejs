@@ -4,8 +4,10 @@ import LikeIcon from "./LikeIcon.vue";
 import ReplyIcon from "./ReplyIcon.vue";
 import {computed} from "vue";
 import ProfileIcon from "./ProfileIcon.vue";
+import PostMedia from "./PostMedia.vue";
 
 const props = defineProps<{ post: Post, isReply?: boolean }>()
+
 
 const date = computed(() => {
   return props.post.datePosted.toLocaleString('pl-PL');
@@ -17,7 +19,7 @@ const date = computed(() => {
     <div class="repliedTo" v-if="post.parent && !isReply" >
       ...
     </div>
-    <div class="actual-post" @click="$router.push(`/${post.id}`)">
+    <div class="actual-post" @click="$router.push(`/post/${post.id}`)">
     <div class="post-avatar">
       <ProfileIcon/>
     </div>
@@ -29,9 +31,10 @@ const date = computed(() => {
       </div>
       <div class="post-content">
         <p class="body">{{ post.body }}</p>
+        <PostMedia v-if="post.media" :url="post.media"/>
       </div>
       <div class="post-footer">
-        <LikeIcon :liked="post.hasLiked.hasLiked > 0" @like-or-unlike="$emit('like-or-unlike', props.post.id)"/>
+        <LikeIcon :liked="post.hasLiked > 0" @like-or-unlike="$emit('like-or-unlike', props.post.id)"/>
         <p class="likes-count">{{ post.likesCount }}</p>
         <ReplyIcon/>
         <p class="replies-count">{{ post.repliesCount }}</p>
@@ -44,6 +47,7 @@ const date = computed(() => {
 
 <style scoped lang="scss">
 .post {
+  background-color: $color-secondary;
   &:hover {
     cursor: pointer;
   }

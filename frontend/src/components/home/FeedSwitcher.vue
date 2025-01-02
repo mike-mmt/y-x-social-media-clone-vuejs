@@ -1,21 +1,33 @@
 <script setup lang="ts">
 
 import {Feeds} from "../../enums/feeds.enum.ts";
+import {inject, type Ref} from "vue";
 
-defineProps<{feed: Feeds}>()
+// defineProps<{feed: Feeds}>()
+const { feed, switchFeed } = inject<{ feed: Ref<Feeds>, switchFeed: (newFeed: Feeds) => void }>("feed") as { feed: Ref<Feeds>, switchFeed: (newFeed: Feeds) => void };
+
+//$emit('switchFeed', Feeds.ForYou)
 </script>
+
+
 
 <template>
   <div class="feed-switcher">
     <button class="switch-btn" :class="{active: feed === Feeds.ForYou}" :disabled="feed === Feeds.ForYou"
-            @click="$emit('switchFeed', Feeds.ForYou)">For You</button>
+            @click="switchFeed(Feeds.ForYou)">For You</button>
     <button class="switch-btn" :class="{active: feed === Feeds.Following}" :disabled="feed === Feeds.Following"
-            @click="$emit('switchFeed', Feeds.Following)">Following</button>
+            @click="switchFeed(Feeds.Following)">Following</button>
+    <button class="switch-btn" :class="{active: feed === Feeds.MyPosts}" :disabled="feed === Feeds.MyPosts"
+            @click="switchFeed(Feeds.MyPosts)">My Posts</button>
   </div>
 </template>
 
 <style scoped lang="scss">
 .feed-switcher {
+  background-color: $color-secondary;
+  padding-bottom: 1rem;
+  position: sticky;
+  top: 0;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -21,20 +21,31 @@ const userRegistrationSchema = Joi.object({
 });
 
 // routes
-router.get('/', async (req, res) => {
-    const users = await userRepo.findAll();
-    const usersDto = users.map(user => filterFields(user));
+router.get('/', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const users = await userRepo.findAll(user);
+    const user = req.user;
+    // const usersDto = users.map(user => filterFields(user));
     res.status(200).json(users);
 });
 
-router.get('/:username', async (req, res) => {
-    const username = req.params.username;
-    const user = await userRepo.findByUsername(username);
-    if (user) {
-        res.status(200).json(user);
-    }
-    res.status(404).json({message: 'User not found'});
+// !!! must be before /:username
+router.get('/me', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    res.status(200).json(req.user);
 });
+
+// !!! must be after /me
+router.get('/:username', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const username = req.params.username;
+    const user = req.user;
+    const foundUser = await userRepo.findByUsername(username, user);
+    if (foundUser) {
+        res.status(200).json(foundUser);
+    } else {
+        res.status(404).json({message: 'User not found'});
+    }
+});
+
+
 
 
 router.post('/', async (req, res) => {
@@ -120,7 +131,7 @@ router.post('/:username/unblock', passport.authenticate('jwt', {session: false})
     const username = req.params.username;
     const user = req.user;
     try {
-        await userRepo.block(user, username);
+        await userRepo.unblock(user, username);
         res.status(200).end();
     } catch (e) {
         res.status(500).json({message: e.message});

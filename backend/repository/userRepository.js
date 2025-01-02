@@ -2,25 +2,38 @@ import * as crypto from 'node:crypto';
 
 import {pool} from './configRepos.js';
 
-export async function findAll() {
+const USER_PROJECTION = `*, out('Follows').size() AS followingCount,
+ in('Follows').size() AS followersCount,
+   first(  (SELECT COUNT(*) AS isFollowing FROM (SELECT expand(in('Follows')) FROM $current) WHERE @rid = :userRid)).isFollowing AS isFollowing,
+   first(  (SELECT COUNT(*) AS isMuted FROM (SELECT expand(in('Muted')) FROM $current) WHERE @rid = :userRid)).isMuted AS isMuted,
+   first(  (SELECT COUNT(*) AS isBlocked FROM (SELECT expand(in('Blocked')) FROM $current) WHERE @rid = :userRid)).isBlocked AS isBlocked`;
+
+export async function findAll(user) {
     const session = await pool.acquire();
-    const result = await session.select().from('User').all();
+    const result = await session.query(`${USER_PROJECTION}`, {params: {userRid: user['@rid']}}).all();
     await session.close();
     return result;
 }
 
 export async function findById(id) {
     const session = await pool.acquire();
-    const result = await session.select().from('User').where({'id': id}).one();
+    const result = await session.query(`SELECT * FROM User WHERE id = :id`, {
+        params: {id}
+    }).one()
     await session.close();
-    return result;
+    return result
 }
 
-export async function findByUsername(username) {
+export async function findByUsername(username, user) {
     const session = await pool.acquire();
-    const result = await session.select().from('User').where({'username': username}).one();
+    const result = await session.query(`SELECT ${USER_PROJECTION} FROM User WHERE username = :username`, {
+        params: {
+            username: username,
+            userRid: user['@rid']
+        }
+    }).one()
     await session.close();
-    return result;
+    return result
 }
 
 export async function save(user) {
@@ -33,6 +46,9 @@ export async function save(user) {
     user['dateRegistered'] = new Date();
     const created = await session.create('VERTEX', 'User').set(user).one();
     await session.close();
+    created['followingCount'] = 0;
+    created['followersCount'] = 0;
+    created['isFollowing'] = 0;
     return created;
 }
 
@@ -99,14 +115,14 @@ export async function mute(muter, mutedUsername) {
     if (!muted) {
         throw new Error('User to mute does not exist');
     }
-    const existing = await session.select().from('Mutes').where({
+    const existing = await session.select().from('Muted').where({
         'in': muted['@rid'],
         'out': muter['@rid']
     }).one();
     if (existing) {
         throw new Error('Already muted this user');
     }
-    const result = await session.create('EDGE', 'Follows').from(muter['@rid']).to(muted['@rid']).one();
+    const result = await session.create('EDGE', 'Muted').from(muter['@rid']).to(muted['@rid']).one();
     // console.log(result)
     session.commit();
     await session.close();
@@ -118,7 +134,7 @@ export async function unmute(muter, mutedUsername) {
     if (!muted) {
         throw new Error('User to unmute does not exist');
     }
-    const result = await session.delete('EDGE', 'Mutes').from(muter['@rid']).to(muted['@rid']).one();
+    const result = await session.delete('EDGE', 'Muted').from(muter['@rid']).to(muted['@rid']).one();
     if (result['count'] === 0) {
         throw new Error('User is not muted already');
     }
@@ -136,14 +152,14 @@ export async function block(blocker, blockedUsername) {
     if (!blocked) {
         throw new Error('User to block does not exist');
     }
-    const existing = await session.select().from('Blocks').where({
+    const existing = await session.select().from('Blocked').where({
         'in': blocked['@rid'],
         'out': blocker['@rid']
     }).one();
     if (existing) {
         throw new Error('Already blocked this user');
     }
-    const result = await session.create('EDGE', 'Blocks').from(blocker['@rid']).to(blocked['@rid']).one();
+    const result = await session.create('EDGE', 'Blocked').from(blocker['@rid']).to(blocked['@rid']).one();
     // console.log(result)
     session.commit();
     await session.close();
@@ -155,7 +171,7 @@ export async function unblock(blocker, blockedUsername) {
     if (!blocked) {
         throw new Error('User to unblock does not exist');
     }
-    const result = await session.delete('EDGE', 'Blocks').from(blocker['@rid']).to(blocked['@rid']).one();
+    const result = await session.delete('EDGE', 'Blocked').from(blocker['@rid']).to(blocked['@rid']).one();
     if (result['count'] === 0) {
         throw new Error('User is not blocked already');
     }

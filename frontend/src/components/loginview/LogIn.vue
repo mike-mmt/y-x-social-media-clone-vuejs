@@ -16,16 +16,22 @@ const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
 
-// TODO: Implement login and register functionality: create apiService.login(usrnm, pwd, setAuthToken)
 const {setAuthToken} = inject("authToken") as { setAuthToken: (token: string, cookies: VueCookies) => void };
 const $cookies = inject<VueCookies>('$cookies');
 const router = useRouter()
 
 async function login() {
+  errorMessage.value = '';
   try {
     const token = await getAuthToken(username.value, password.value);
-    setAuthToken(token, $cookies!);
-    router.push('/');
+    username.value = '';
+    password.value = '';
+    if (!token) {
+      errorMessage.value = "Invalid credentials";
+    } else {
+      setAuthToken(token, $cookies!);
+      router.push('/');
+    }
   } catch (e) {
     errorMessage.value = "Log in failed";
   }
@@ -34,6 +40,9 @@ async function login() {
 async function register() {
   try {
     await signUp(username.value, email.value, password.value, displayName.value);
+    username.value = '';
+    email.value = '';
+    displayName.value = '';
     const token = await getAuthToken(username.value, password.value);
     setAuthToken(token, $cookies!);
     router.push('/');
@@ -68,6 +77,7 @@ async function register() {
       <label for="password">Password</label>
       <input class="input" type="password" id="password" placeholder="Password" v-model="password"/>
       <button @click="login" class="login-btn">Log In</button>
+      <p class="error-message" v-if="errorMessage">{{ errorMessage }}</p>
     </div>
     <div v-else-if="activeTab === Tabs.Register" class="form">
       <label for="username">Username</label>
@@ -152,4 +162,7 @@ async function register() {
   background-color: $color-green;
 }
 
+.error-message {
+  color: red;
+}
 </style>
