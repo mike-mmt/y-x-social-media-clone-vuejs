@@ -31,6 +31,8 @@ const user =ref<User | null>(null)
 const route = useRoute();
 const {authToken} = inject<{ authToken: Ref<string, string> }>("authToken", {authToken: ref("")});
 
+const me = inject("user") as Ref<User | null>;
+
 async function likeOrUnlike() {
   if (post.value && post.value.hasLiked > 0) {
     await unlikePost(post.value.id, authToken.value).then(() => {
@@ -174,10 +176,10 @@ watch(
             <h3 class="display-name">{{ post.authorDisplayName }}</h3>
             <p class="username">@{{ post.authorUsername }}</p>
           </div>
-          <FollowButton v-if="user" :is-following="user.isFollowing" @followOrUnfollow="followOrUnfollow"/>
+          <FollowButton v-if="user && user.username !== me?.username" :is-following="user.isFollowing" @followOrUnfollow="followOrUnfollow"/>
           <div class="divider"> </div>
-          <MuteButton class="mute-block-btn" v-if="user" :is-muted="user.isMuted" @mute-or-unmute="muteOrUnmute"/>
-          <BlockButton class="mute-block-btn" v-if="user" :is-blocked="user.isBlocked" @block-or-unblock="blockOrUnblock"/>
+          <MuteButton class="mute-block-btn" v-if="user && user.username !== me?.username" :is-muted="user.isMuted" @mute-or-unmute="muteOrUnmute"/>
+          <BlockButton class="mute-block-btn" v-if="user && user.username !== me?.username" :is-blocked="user.isBlocked" @block-or-unblock="blockOrUnblock"/>
         </div>
         <div class="post-content">
           <p class="body">{{ post.body }}</p>

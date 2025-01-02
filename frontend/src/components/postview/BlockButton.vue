@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {computed, ref} from "vue";
+import type {User} from "../../models.ts";
 
-const props = defineProps<{ isBlocked: number }>()
+const props = defineProps<{ isBlocked: number, user?: User }>()
 const isHovered = ref(false);
 
 const btnText = computed(() => {
@@ -21,7 +22,7 @@ function onMouseLeave() {
 <button :class="{ block: !isBlocked, unblock: isBlocked }" class="btn"
         @mouseenter="onMouseEnter"
         @mouseleave="onMouseLeave"
-        @click.stop="$emit('block-or-unblock')">
+        @click.stop="$emit('block-or-unblock', props.user)">
   {{ btnText}}
 </button>
 </template>

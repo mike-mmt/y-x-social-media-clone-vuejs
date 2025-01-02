@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {computed, ref} from "vue";
+import type {User} from "../../models.ts";
 
-const props = defineProps<{ isFollowing: number }>()
+const props = defineProps<{ isFollowing: number, user?: User }>()
 const isHovered = ref(false);
 
 const btnText = computed(() => {
@@ -21,7 +22,7 @@ function onMouseLeave() {
 <button :class="{ follow: !isFollowing, unfollow: isFollowing }" class="btn"
         @mouseenter="onMouseEnter"
         @mouseleave="onMouseLeave"
-        @click.stop="$emit('follow-or-unfollow')">
+        @click.stop="$emit('follow-or-unfollow', props.user)">
   {{ btnText}}
 </button>
 </template>

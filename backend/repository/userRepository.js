@@ -24,7 +24,18 @@ export async function findById(id) {
     return result
 }
 
-export async function findByUsername(username, user) {
+export async function findByUsername(username) {
+    const session = await pool.acquire();
+    const result = await session.query(`SELECT FROM User WHERE username = :username`, {
+        params: {
+            username: username,
+        }
+    }).one()
+    await session.close();
+    return result
+}
+
+export async function findByUsernameWithInfo(username, user) {
     const session = await pool.acquire();
     const result = await session.query(`SELECT ${USER_PROJECTION} FROM User WHERE username = :username`, {
         params: {
@@ -177,4 +188,62 @@ export async function unblock(blocker, blockedUsername) {
     }
     await session.close();
     return result;
+}
+
+export async function findFollowers(username) {
+    const session = await pool.acquire();
+    const result = await session.query(`SELECT ${USER_PROJECTION} FROM (SELECT expand(in('Follows')) FROM User WHERE username = :username)`, {
+        params: {
+            username: username
+        }
+    }).all();
+    await session.close();
+    return result;
+}
+
+export async function findFollowing(username, user) {
+    const session = await pool.acquire();
+    const result = await session.query(`SELECT ${USER_PROJECTION} FROM (SELECT expand(out('Follows')) FROM User WHERE username = :username)`, {
+        params: {
+            username: username,
+            userRid: user['@rid']
+        }
+    }).all();
+    await session.close();
+    return result;
+}
+
+export async function findMuted(username, user) {
+    const session = await pool.acquire();
+    const result = await session.query(`SELECT ${USER_PROJECTION} FROM (SELECT expand(out('Muted')) FROM User WHERE username = :username)`, {
+        params: {
+            username: username,
+            userRid: user['@rid']
+        }
+    }).all();
+    await session.close();
+    return result;
+}
+
+export async function findBlocked(username, user) {
+    const session = await pool.acquire();
+    const result = await session.query(`SELECT ${USER_PROJECTION} FROM (SELECT expand(out('Blocked')) FROM User WHERE username = :username)`, {
+        params: {
+            username: username,
+            userRid: user['@rid']
+        }
+    }).all();
+    await session.close();
+    return result;
+}
+
+export async function findMyInfo(user) {
+    const session = await pool.acquire();
+    const result = await session.query(`SELECT ${USER_PROJECTION}, out('Muted').size() AS mutedCount, out('Blocked').size() AS blockedCount FROM User WHERE @rid = :userRid`, {
+        params: {
+            userRid: user['@rid']
+        }
+    }).one()
+    await session.close();
+    return result
 }

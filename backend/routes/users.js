@@ -22,22 +22,23 @@ const userRegistrationSchema = Joi.object({
 
 // routes
 router.get('/', passport.authenticate('jwt', {session: false}), async (req, res) => {
-    const users = await userRepo.findAll(user);
     const user = req.user;
+    const users = await userRepo.findAll(user);
     // const usersDto = users.map(user => filterFields(user));
     res.status(200).json(users);
 });
 
 // !!! must be before /:username
 router.get('/me', passport.authenticate('jwt', {session: false}), async (req, res) => {
-    res.status(200).json(req.user);
+    const user = await userRepo.findMyInfo(req.user);
+    res.status(200).json(user);
 });
 
 // !!! must be after /me
 router.get('/:username', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const username = req.params.username;
     const user = req.user;
-    const foundUser = await userRepo.findByUsername(username, user);
+    const foundUser = await userRepo.findByUsernameWithInfo(username, user);
     if (foundUser) {
         res.status(200).json(foundUser);
     } else {
@@ -133,6 +134,50 @@ router.post('/:username/unblock', passport.authenticate('jwt', {session: false})
     try {
         await userRepo.unblock(user, username);
         res.status(200).end();
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
+router.get('/:username/following', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const username = req.params.username;
+    const user = req.user;
+    try {
+        const users = await userRepo.findFollowing(username, user);
+        res.status(200).json(users);
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
+router.get('/:username/followers', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const username = req.params.username;
+    const user = req.user;
+    try {
+        const users = await userRepo.findFollowers(username, user);
+        res.status(200).json(users);
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
+router.get('/:username/blocked', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const username = req.params.username;
+    const user = req.user;
+    try {
+        const users = await userRepo.findBlocked(username, user);
+        res.status(200).json(users);
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
+router.get('/:username/muted', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    const username = req.params.username;
+    const user = req.user;
+    try {
+        const users = await userRepo.findMuted(username, user);
+        res.status(200).json(users);
     } catch (e) {
         res.status(500).json({message: e.message});
     }

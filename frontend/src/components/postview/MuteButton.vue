@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {computed, ref} from "vue";
+import type {User} from "../../models.ts";
 
-const props = defineProps<{ isMuted: number }>()
+const props = defineProps<{ isMuted: number, user?: User }>()
 const isHovered = ref(false);
 
 const btnText = computed(() => {
@@ -21,7 +22,7 @@ function onMouseLeave() {
 <button :class="{ mute: !isMuted, unmute: isMuted }" class="btn"
         @mouseenter="onMouseEnter"
         @mouseleave="onMouseLeave"
-        @click.stop="$emit('mute-or-unmute')">
+        @click.stop="$emit('mute-or-unmute', props.user)">
   {{ btnText}}
 </button>
 </template>

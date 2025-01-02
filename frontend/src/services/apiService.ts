@@ -212,3 +212,51 @@ export async function getMyUser(authToken: string) {
         return null
     }
 }
+
+export async function getFollowers(username: string, authToken: string) {
+    try {
+        const response = await axios.get(`${apiUrl}/users/${username}/followers`, {
+            headers: {Authorization: `Bearer ${authToken}`},
+        });
+        return response.data;
+    } catch (error) {
+        console.error(error)
+        return []
+    }
+}
+
+export async function getFollowing(username: string, authToken: string) {
+    try {
+        const response = await axios.get(`${apiUrl}/users/${username}/following`, {
+            headers: {Authorization: `Bearer ${authToken}`},
+        });
+        return response.data;
+    } catch (error) {
+        console.error(error)
+        return []
+    }
+}
+
+export async function getMuted(username: string, authToken: string) {
+    try {
+        const response = await axios.get(`${apiUrl}/users/${username}/muted`, {
+            headers: {Authorization: `Bearer ${authToken}`},
+        });
+        return response.data;
+    } catch (error) {
+        console.error(error)
+        return []
+    }
+}
+
+export async function getBlocked(username: string, authToken: string) {
+    try {
+        const response = await axios.get(`${apiUrl}/users/${username}/blocked`, {
+            headers: {Authorization: `Bearer ${authToken}`},
+        });
+        return response.data;
+    } catch (error) {
+        console.error(error)
+        return []
+    }
+}

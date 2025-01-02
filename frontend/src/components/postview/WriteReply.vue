@@ -14,6 +14,7 @@ function onClickReply() {
   emit('post-reply', replyBody.value);
   replyBody.value = "";
 }
+// TODO add mediacd
 </script>
 
 <template>

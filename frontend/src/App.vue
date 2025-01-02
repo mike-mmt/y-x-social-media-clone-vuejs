@@ -8,25 +8,26 @@ import {useRouter} from "vue-router";
 import type {User} from "./models.ts";
 
 const $cookies = inject<VueCookies>('$cookies');
-
-// const authToken = ref("");
-// const setAuthToken = (token: string) => {
-//   authToken.value = token;
-//   $cookies!.set("authToken", token);
-// };
-// provide("authToken", {authToken, setAuthToken});
 const {authToken, setAuthToken} = inject("authToken") as { authToken: Ref<string>, setAuthToken: (token: string, cookies: VueCookies) => void };
 const router = useRouter();
-
 const feed = ref(Feeds.ForYou);
 const user = ref<User | null>(null);
 
 provide("user", user);
+provide("feed", {feed, switchFeed});
+// provide("logOut", logOut);
+
+function logOut() {
+  console.log("Logging out");
+  setAuthToken("", $cookies!);
+  $cookies!.remove("authToken");
+  user.value = null;
+  router.push("/login");
+}
 
 function switchFeed(newFeed: Feeds) {
   feed.value = newFeed;
 }
-provide("feed", {feed, switchFeed});
 
 watch(authToken, (newToken) => {
   if (newToken) {
@@ -55,7 +56,7 @@ onMounted(() => {
 
 <template>
   <div class="home">
-    <Sidebar/>
+    <Sidebar :logout="logOut"/>
     <RouterView class="router-view" />
   </div>
 </template>
