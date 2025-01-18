@@ -9,12 +9,14 @@ import {createRouter, createWebHistory} from "vue-router";
 import LogIn from "./components/loginview/LogIn.vue";
 import MyUserView from "./components/userview/MyUserView.vue";
 import UserView from "./components/userview/UserView.vue";
+import NotFound from "./components/NotFound.vue";
 const routes = [
     { path: '/', component: Home, meta: { requiresAuth: true } },
     { path: '/login', component: LogIn},
     { path: '/post/:id', component: PostView, meta: { requiresAuth: true } },
     { path: '/me', component: MyUserView, meta: { requiresAuth: true } },
     { path: '/user/:username', component: UserView, meta: { requiresAuth: true } },
+    { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound },
 ]
 
 const router = createRouter({

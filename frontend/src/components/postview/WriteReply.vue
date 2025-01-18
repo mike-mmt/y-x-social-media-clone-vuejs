@@ -2,7 +2,7 @@
 import ProfileIcon from "../post/ProfileIcon.vue";
 import {ref} from "vue";
 
-const props = defineProps<{
+defineProps<{
   replyingTo: string | null;
 }>()
 const isFocused = ref(false);
