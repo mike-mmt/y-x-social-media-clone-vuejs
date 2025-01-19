@@ -23,6 +23,7 @@ app.use(express.json());
 // app.use(express.static(path.join("public")));
 
 // passport
+import passport from 'passport';
 app.use(passport.initialize());
 import "./passport-config.js";
 
@@ -48,9 +49,6 @@ const orientConfig = {
 
 import {config as configRepos} from "./repository/configRepos.js";
 
-
-// authorization
-import passport from 'passport';
 import {initDatabase} from './repository/init.js';
 
 try {
@@ -87,7 +85,7 @@ try {
     const server = app.listen(apiPort, () => {
         console.log(`Serwer działa na https://${apiHost}:${apiPort}`);
     });
-    server.setTimeout(1000 * 10); // 10 seconds
+    server.setTimeout(1000 * 3); // 3 seconds
 
 } catch (err) {
     console.error(`Błąd połączenia z OrientDB: `, err);

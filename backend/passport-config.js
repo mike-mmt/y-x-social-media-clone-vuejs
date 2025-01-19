@@ -24,7 +24,11 @@ passport.use(
     new Strategy(opts, async (payload, done) => {
         try {
             const user = await userRepo.findById(payload.userId);
-            if (user) return done(null, user);
+            if (user) {
+                return done(null, user);
+            } else {
+                return done(null, false);
+            }
         } catch (error) {
             return done(error);
         }
