@@ -63,6 +63,7 @@ try {
             const conn = await setupDatabaseConnection(orientConfig);
             client = conn.client;
             pool = conn.pool;
+            break;
         } catch (error) {
             console.error(`Failed to connect (attempt ${i + 1}/${maxRetries}):`, error);
             if (i < maxRetries - 1) {

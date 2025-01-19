@@ -40,10 +40,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY ssl/y.crt /etc/nginx/ssl/y.crt
 COPY ssl/y.key /etc/nginx/ssl/y.key
 
-# Expose port 80
-EXPOSE 80
-
-# Start both nginx and node.js backend using a shell script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
+# Expose port 80
+EXPOSE 80
+EXPOSE 443
+
 CMD ["/start.sh"]
