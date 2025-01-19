@@ -6,7 +6,7 @@ import * as path from 'node:path'
 export default defineConfig({
   plugins: [vue()],
   build: {
-    outDir: '../backend/public',
+    outDir: 'dist',
     emptyOutDir: false,
   },
   resolve: {

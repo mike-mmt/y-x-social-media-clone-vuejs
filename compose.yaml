@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NODE_ENV=production
+      # Add OrientDB connection details for your application
+      - ORIENTDB_HOST=orientdb
+      - ORIENTDB_PORT=2424
+    networks:
+      - app-network
+    depends_on:
+      - orientdb
+    restart: unless-stopped
+
+  orientdb:
+    image: orientdb:latest
+    ports:
+      - "2424:2424"  # Binary protocol port
+      - "2480:2480"  # HTTP protocol port (Studio)
+    environment:
+      - ORIENTDB_ROOT_PASSWORD=rootpwd
+    volumes:
+      - orientdb_data:/orientdb/databases
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  orientdb_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

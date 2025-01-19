@@ -2,17 +2,15 @@ import express from "express";
 import path from "node:path";
 import bodyParser from "body-parser";
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 // import cookie_parser from "cookie-parser";
 import setupDatabaseConnection from "./setupDatabaseConnection.js";
 
 const app = express();
-const server = https.createServer({
-    key: fs.readFileSync('./ssl/my.key'),
-    cert: fs.readFileSync('./ssl/my.crt')
-}, app);
 
+// simple request logging
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
@@ -22,18 +20,13 @@ app.use(cors())
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.json());
 
-app.use(express.static(path.join("public")));
+// app.use(express.static(path.join("public")));
 
 // passport
 app.use(passport.initialize());
-// import passportConfig from './passport-config.js'
 import "./passport-config.js";
-// passportConfig(passport);
 
 // routes
-app.get('/', function (req,res) {
-    res.sendFile(path + "index.html");
-});
 
 import users from "./routes/users.js";
 app.use('/api/users', users);
@@ -44,8 +37,8 @@ app.use('/api/auth', auth);
 
 // db config
 const orientConfig = {
-    host: 'localhost',
-    port: 2424,
+    host: process.env.ORIENTDB_HOST || 'localhost',
+    port: parseInt(process.env.ORIENTDB_PORT) || 2424,
     db: "tswproject",
     rootUser: "root",
     rootPassword: "rootpwd",
@@ -60,30 +53,38 @@ import {config as configRepos} from "./repository/configRepos.js";
 import passport from 'passport';
 import {initDatabase} from './repository/init.js';
 
-
-// Dodajemy serwer HTTPS
-import fs from 'fs';
-
-import https from 'https';
-
-import cors from 'cors';
-
 try {
     // setup db
-    const { client, pool } = await setupDatabaseConnection(orientConfig);
+    let client, pool;
+    let maxRetries = 5, delay = 5000
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            console.log(`Attempting to connect to OrientDB (attempt ${i + 1}/${maxRetries})...`);
+            const conn = await setupDatabaseConnection(orientConfig);
+            client = conn.client;
+            pool = conn.pool;
+        } catch (error) {
+            console.error(`Failed to connect (attempt ${i + 1}/${maxRetries}):`, error);
+            if (i < maxRetries - 1) {
+                console.log(`Waiting ${delay / 1000} seconds before next attempt...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+                throw new Error('Failed to connect to OrientDB after multiple attempts');
+            }
+        }
+    }
 
     // config user repository
     configRepos(client, pool);
 
-    await initDatabase() // ONLY RUN ONCE
-
+    await initDatabase()
 
     console.log(`Połączono z OrientDB: "${client.connected}"`);
     const apiPort = process.env.PORT || 3000;
     const apiHost = process.env.API_HOST || 'localhost';
 
-    server.listen(apiPort, () => {
-        console.log(`Serwer działa na http://${apiHost}:${apiPort}`);
+    const server = app.listen(apiPort, () => {
+        console.log(`Serwer działa na https://${apiHost}:${apiPort}`);
     });
     server.setTimeout(1000 * 10); // 10 seconds
 
