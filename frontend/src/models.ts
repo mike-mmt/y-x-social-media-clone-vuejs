@@ -9,6 +9,7 @@ export interface Post {
     parent?: string,
     datePosted: Date,
     hasLiked: number,
+    isMuted: number,
 }
 export interface User {
     username: string,
