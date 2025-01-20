@@ -8,6 +8,7 @@ const POST_PROJECTION = `*, first(in('Posted')).username AS authorUsername,
  first(in('Posted')).displayName AS authorDisplayName,
   in('Likes').size() AS likesCount,
    in('Replied').size() AS repliesCount,
+   first((SELECT COUNT(*) AS isMuted FROM (SELECT expand(in('Muted')) FROM (SELECT expand(in('Posted')) FROM $current)) WHERE @rid = :userRid)).isMuted AS isMuted,
     first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)).hasLiked AS hasLiked`;
 
 export async function findAll() {
@@ -67,9 +68,9 @@ export async function deleteById(id) {
     return result;
 }
 
-export async function findReplies(id) {
+export async function findReplies(id, user) {
     const session = await pool.acquire();
-    const result = await session.query(`SELECT ${POST_PROJECTION} FROM  (SELECT expand(in("Replied")) FROM Post WHERE id = :id)`, {params: {id: id}}).all();
+    const result = await session.query(`SELECT ${POST_PROJECTION} FROM (SELECT expand(in("Replied")) FROM Post WHERE id = :id) WHERE :userRid NOT IN first(in('Posted')).in('Blocked')`, {params: {id: id, userRid: user['@rid']}}).all();
     await session.close();
     return result;
 }
