@@ -21,6 +21,7 @@ import PostMedia from "../post/PostMedia.vue";
 import FollowButton from "./FollowButton.vue";
 import MuteButton from "./MuteButton.vue";
 import BlockButton from "./BlockButton.vue";
+import MutedPost from "./MutedPost.vue";
 
 const post = ref<PostType | null>(null);
 const parentPost = ref<PostType | null>(null);
@@ -87,6 +88,13 @@ async function fetchPost(authToken: string) {
       console.log('user', user.value);
     });
   });
+}
+async function fetchReplies() {
+  if (post.value) {
+    getReplies(post.value.id, authToken.value).then((newReplies) => {
+      replies.value = newReplies;
+    });
+  }
 }
 
 async function followOrUnfollow() {
@@ -199,7 +207,10 @@ watch(
     </div>
     <WriteReply v-if="post" :replying-to="post.authorUsername" @post-reply="writeReply"/>
     <div class="replies" v-if="replies.length > 0">
-      <Post v-for="reply in replies" :post="reply" :key="reply.id" :isReply="true" @like-or-unlike="likeOrUnlikeReply"/>
+      <template v-for="reply in replies" :key="reply.id">
+        <MutedPost v-if="reply.isMuted > 0" :post="reply" @reloadReplies="fetchReplies" />
+        <Post v-else :post="reply"  :isReply="true" @like-or-unlike="likeOrUnlikeReply"/>
+      </template>
     </div>
 
   </div>

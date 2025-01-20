@@ -54,8 +54,9 @@ router.post('/', passport.authenticate('jwt', {session: false}), async (req, res
 
 router.get('/id/:id/replies', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const id = req.params.id;
+    const user = req.user;
     try {
-        const replies = await postRepo.findReplies(id);
+        const replies = await postRepo.findReplies(id, user);
         res.status(200).json(replies);
     } catch (e) {
         console.error(e);
