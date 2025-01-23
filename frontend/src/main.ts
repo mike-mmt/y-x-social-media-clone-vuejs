@@ -1,4 +1,5 @@
-import {createApp, ref} from 'vue'
+import {createApp, inject, ref} from 'vue';
+import type {Ref} from "vue";
 import './assets/scss/styles.scss'
 import App from './App.vue'
 import VueCookies from 'vue-cookies'
@@ -30,18 +31,18 @@ const setAuthToken = (token: string, cookies: VueCookiesType) => {
     cookies.set("authToken", token);
 };
 
-// router.beforeEach((to, _from, next) => {
-//     if (to.matched.some(record => record.meta.requiresAuth)) {
-//         // this route requires auth, check if logged in, if not, redirect to login page.
-//         const { authToken } = inject('authToken') as { authToken: Ref<string> }
-//         if (!authToken.value) {
-//             next({ path: '/login' })
-//         } else {
-//             next() // go to wherever I'm going
-//         }
-//     } else {
-//         next() // does not require auth, make sure to always call next()!
-//     }
-// })
+router.beforeEach((to, _from, next) => {
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+        // this route requires auth, check if logged in, if not, redirect to login page.
+        const { authToken } = inject('authToken') as { authToken: Ref<string> }
+        if (!authToken.value) {
+            next({ path: '/login' })
+        } else {
+            next() // go to wherever I'm going
+        }
+    } else {
+        next() // does not require auth, make sure to always call next()!
+    }
+})
 
 createApp(App).use(VueCookies, { expires: '30d'}).provide("authToken", {authToken, setAuthToken}).use(router).mount('#app')
