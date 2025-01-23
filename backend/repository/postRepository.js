@@ -70,7 +70,7 @@ export async function deleteById(id) {
 
 export async function findReplies(id, user) {
     const session = await pool.acquire();
-    const result = await session.query(`SELECT ${POST_PROJECTION} FROM (SELECT expand(in("Replied")) FROM Post WHERE id = :id) WHERE :userRid NOT IN first(in('Posted')).in('Blocked')`, {params: {id: id, userRid: user['@rid']}}).all();
+    const result = await session.query(`SELECT ${POST_PROJECTION} FROM (SELECT expand(in("Replied")) FROM Post WHERE id = :id) WHERE :userRid NOT IN first(in('Posted')).in('Blocked') ORDER BY datePosted DESC`, {params: {id: id, userRid: user['@rid']}}).all();
     await session.close();
     return result;
 }
