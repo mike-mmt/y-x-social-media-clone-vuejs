@@ -2,7 +2,7 @@
 import type {Post as PostType, User} from "../../models.ts";
 import LikeIcon from "../post/LikeIcon.vue";
 import ReplyIcon from "../post/ReplyIcon.vue";
-import {inject, onMounted, ref, type Ref, watch} from "vue";
+import {inject, onMounted, onUnmounted, ref, type Ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import {
   blockUser,
@@ -22,6 +22,7 @@ import FollowButton from "./FollowButton.vue";
 import MuteButton from "./MuteButton.vue";
 import BlockButton from "./BlockButton.vue";
 import MutedPost from "./MutedPost.vue";
+import {io, Socket} from "socket.io-client";
 
 const post = ref<PostType | null>(null);
 const parentPost = ref<PostType | null>(null);
@@ -33,6 +34,8 @@ const route = useRoute();
 const {authToken} = inject<{ authToken: Ref<string, string> }>("authToken", {authToken: ref("")});
 
 const me = inject("user") as Ref<User | null>;
+
+let socket: Socket
 
 async function likeOrUnlike() {
   if (post.value && post.value.hasLiked > 0) {
@@ -87,6 +90,21 @@ async function fetchPost(authToken: string) {
       user.value = newUser;
       console.log('user', user.value);
     });
+    socket = io({
+      path: '/socket.io/socket.io',
+      transports: ['websocket', 'polling']
+    });
+    socket.on('connect', () => {
+      console.log(`Connected to /post/${post.value!.id} namespace`);
+    });
+    socket.on(`newReplyUnderPost:${post.value?.id}`, (reply: PostType) => {
+      console.log('socket: new reply');
+      if (reply.authorUsername === me.value?.username) {
+        return;
+      }
+      replies.value.unshift(reply);
+      post.value!.repliesCount!++;
+    });
   });
 }
 async function fetchReplies() {
@@ -139,17 +157,6 @@ async function blockOrUnblock() {
   }
 }
 
-onMounted(async () => {
-  if (authToken.value !== "") {
-    fetchPost(authToken.value)
-  } else {
-    watch(authToken, async (newToken: string) => {
-      fetchPost(newToken)
-    })
-  }
-
-})
-
 function writeReply(body: string, media: string) {
   if (post.value) {
     createPost(body, media, post.value.id, authToken.value).then((newPost) => {
@@ -160,6 +167,21 @@ function writeReply(body: string, media: string) {
   }
 }
 
+onMounted(async () => {
+  if (authToken.value !== "") {
+    fetchPost(authToken.value)
+  } else {
+    watch(authToken, async (newToken: string) => {
+      fetchPost(newToken)
+    })
+  }
+})
+onUnmounted(() => {
+  socket.off();
+  socket.disconnect();
+})
+
+
 watch(
     () => route.params.id,
     (newId, oldId) => {
@@ -167,6 +189,7 @@ watch(
       fetchPost(authToken.value)
     }
 )
+
 // TODO: hide buttons if author is the same as logged in user
 </script>
 

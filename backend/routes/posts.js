@@ -4,6 +4,7 @@ const router = express.Router();
 import Joi from 'joi';
 import * as postRepo from '../repository/postRepository.js';
 import passport from 'passport';
+import {broadcastNewPostReplyNotification} from "../sio.js";
 
 // helpers
 const defaultAllowedFields = ['id', 'author', 'body', 'datePosted', 'media', 'likesCount', 'childCount'];
@@ -45,6 +46,9 @@ router.post('/', passport.authenticate('jwt', {session: false}), async (req, res
     }
     try {
         const post = await postRepo.save(value, req.user);
+        if (post["parent"]) {
+            broadcastNewPostReplyNotification(post["parent"], post);
+        }
         res.status(201).json(post);
     } catch (e) {
         console.error(e);
