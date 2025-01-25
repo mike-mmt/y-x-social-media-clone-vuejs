@@ -22,3 +22,11 @@ export interface User {
     followersCount: number,
 
 }
+
+export interface NotificationType {
+    type: string,
+    timestamp: Date,
+    link: string,
+    description: string,
+    content?: string,
+}

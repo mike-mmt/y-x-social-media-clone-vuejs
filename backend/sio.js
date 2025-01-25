@@ -14,7 +14,45 @@ export const setupSio = (server) => {
     });
 };
 
-export const broadcastNewPostReplyNotification = async (postId, newReply) => {
+export const broadcastPostNewReply = async (postId, newReply) => {
     sio.emit(`newReplyUnderPost:${postId}`, newReply);
-    console.log(`SIO: emitting new reply to post ${postId}`);
+    // console.log(`SIO: emitting new reply to post ${postId}`);
+}
+
+export const broadcastPostLike = async (postId, username) => {
+    sio.emit(`postLike:${postId}`, username);
+    // console.log(`SIO: emitting like to post ${postId}`);
+}
+
+export const broadcastPostUnlike = async (postId, username) => {
+    sio.emit(`postUnlike:${postId}`, username);
+    // console.log(`SIO: emitting like to post ${postId}`);
+}
+
+export const broadcastUserNotification = async (username, notification) => {
+    sio.emit(`notification:${username}`, notification);
+    // console.log(`SIO: emitting notification to ${username}`);
+}
+
+export const broadcastUserPostReplyNotification = async (username, post, reply) => {
+    await broadcastUserNotification(username, {
+        type: 'yourPostReply',
+        post: post,
+        reply: reply
+    })
+}
+
+export const broadcastUserPostLikeNotification = async (username, post, liker) => {
+    await broadcastUserNotification(username, {
+        type: 'yourPostLike',
+        post: post,
+        liker: liker
+    })
+}
+
+export const broadcastFollowNotification = async (username, follower) => {
+    await broadcastUserNotification(username, {
+        type: 'newFollower',
+        follower: follower
+    })
 }

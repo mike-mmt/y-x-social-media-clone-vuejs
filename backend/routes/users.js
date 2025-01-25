@@ -4,6 +4,7 @@ import * as userRepo from '../repository/userRepository.js';
 import * as postRepo from '../repository/postRepository.js';
 import passport from 'passport';
 import bcrypt from 'bcryptjs';
+import {broadcastFollowNotification} from "../sio.js";
 
 const router = express.Router();
 
@@ -79,6 +80,7 @@ router.post('/:username/follow', passport.authenticate('jwt', {session: false}),
     const user = req.user;
     try {
         await userRepo.follow(user, username);
+        broadcastFollowNotification(username, user)
         res.status(200).end();
     } catch (e) {
         res.status(500).json({message: e.message});

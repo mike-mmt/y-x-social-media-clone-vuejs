@@ -11,6 +11,7 @@ import LogIn from "./components/loginview/LogIn.vue";
 import MyUserView from "./components/userview/MyUserView.vue";
 import UserView from "./components/userview/UserView.vue";
 import NotFound from "./components/NotFound.vue";
+import {io} from "socket.io-client";
 const routes = [
     { path: '/', component: Home, meta: { requiresAuth: true } },
     { path: '/login', component: LogIn},
@@ -45,4 +46,12 @@ router.beforeEach((to, _from, next) => {
     }
 })
 
-createApp(App).use(VueCookies, { expires: '30d'}).provide("authToken", {authToken, setAuthToken}).use(router).mount('#app')
+const socket = io({
+        path: '/socket.io/socket.io',
+        transports: ['websocket', 'polling']
+    });
+    socket.on('connect', () => {
+        console.log(`Connected to s.io`);
+    });
+
+createApp(App).use(VueCookies, { expires: '30d'}).provide("authToken", {authToken, setAuthToken}).provide("socket", socket).use(router).mount('#app')

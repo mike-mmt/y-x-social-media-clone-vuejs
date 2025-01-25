@@ -22,7 +22,7 @@ import FollowButton from "./FollowButton.vue";
 import MuteButton from "./MuteButton.vue";
 import BlockButton from "./BlockButton.vue";
 import MutedPost from "./MutedPost.vue";
-import {io, Socket} from "socket.io-client";
+import {Socket} from "socket.io-client";
 
 const post = ref<PostType | null>(null);
 const parentPost = ref<PostType | null>(null);
@@ -35,7 +35,7 @@ const {authToken} = inject<{ authToken: Ref<string, string> }>("authToken", {aut
 
 const me = inject("user") as Ref<User | null>;
 
-let socket: Socket
+const socket: Socket = inject<Socket>("socket", {} as Socket);
 
 async function likeOrUnlike() {
   if (post.value && post.value.hasLiked > 0) {
@@ -89,13 +89,6 @@ async function fetchPost(authToken: string) {
     getUser(newPost.authorUsername, authToken).then((newUser) => {
       user.value = newUser;
       console.log('user', user.value);
-    });
-    socket = io({
-      path: '/socket.io/socket.io',
-      transports: ['websocket', 'polling']
-    });
-    socket.on('connect', () => {
-      console.log(`Connected to /post/${post.value!.id} namespace`);
     });
     socket.on(`newReplyUnderPost:${post.value?.id}`, (reply: PostType) => {
       console.log('socket: new reply');
@@ -177,7 +170,7 @@ onMounted(async () => {
   }
 })
 onUnmounted(() => {
-  socket.off();
+  socket.off("newReplyUnderPost:${post.value?.id}");
   socket.disconnect();
 })
 
@@ -186,6 +179,7 @@ watch(
     () => route.params.id,
     (newId, oldId) => {
       console.log("detected change in route", newId, oldId)
+      socket.off(`newReplyUnderPost:${oldId}`);
       fetchPost(authToken.value)
     }
 )
