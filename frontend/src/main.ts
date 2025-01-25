@@ -47,7 +47,7 @@ router.beforeEach((to, _from, next) => {
 })
 
 const socket = io({
-        path: '/socket.io/socket.io',
+        path: import.meta.env.VITE_SOCKETIO_URL || '/socket.io/socket.io',
         transports: ['websocket', 'polling']
     });
     socket.on('connect', () => {

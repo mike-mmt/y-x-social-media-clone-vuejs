@@ -184,7 +184,20 @@ watch(
     }
 )
 
-// TODO: hide buttons if author is the same as logged in user
+// for list animation
+function onEnter(el: any, done: any) {
+  gsap.to(el, {
+    opacity: 1,
+    height: "auto",
+    delay: el.dataset.index * 0.15,
+    onComplete: () => {
+      done()
+    }
+  })
+}
+function beforeEnter(el: any) {
+  gsap.set(el, { opacity: 0, height: 0 })
+}
 </script>
 
 <template>
@@ -224,12 +237,13 @@ watch(
     </div>
     <WriteReply v-if="post" :replying-to="post.authorUsername" @post-reply="writeReply"/>
     <div class="replies" v-if="replies.length > 0">
+      <TransitionGroup name="replies-list" :css="false"  @before-enter="beforeEnter" @enter="onEnter" @leave="" >
       <template v-for="reply in replies" :key="reply.id">
         <MutedPost v-if="reply.isMuted > 0" :post="reply" @reloadReplies="fetchReplies" />
         <Post v-else :post="reply"  :isReply="true" @like-or-unlike="likeOrUnlikeReply"/>
       </template>
+      </TransitionGroup>
     </div>
-
   </div>
 </template>
 

@@ -7,9 +7,9 @@ import passport from 'passport';
 import {
     broadcastPostLike,
     broadcastPostNewReply,
-    broadcastPostUnlike,
+    broadcastPostUnlike, broadcastUserPostLikeNotification,
     broadcastUserPostReplyNotification
-} from "../sio.js";
+} from '../sio.js';
 
 // helpers
 const defaultAllowedFields = ['id', 'author', 'body', 'datePosted', 'media', 'likesCount', 'childCount'];
@@ -54,6 +54,7 @@ router.post('/', passport.authenticate('jwt', {session: false}), async (req, res
         if (post["parent"]) {
             const parentPost = await postRepo.findById(post["parent"], req.user);
             if (parentPost) {
+                console.log("backend: route: post", parentPost)
                 broadcastPostNewReply(post["parent"], post);
                 broadcastUserPostReplyNotification(parentPost.authorUsername, parentPost, post);
             }
@@ -108,8 +109,10 @@ router.post('/id/:id/like', passport.authenticate('jwt', {session: false}), asyn
     const id = req.params.id;
     try {
         const like = await postRepo.like(id, req.user);
+        const likedPost = await postRepo.findById(id, req.user);
+        console.log("backend: route: like", like)
         broadcastPostLike(id, req.user.username);
-
+        broadcastUserPostLikeNotification(likedPost.authorUsername, likedPost, req.user);
         res.status(200).json(like);
     } catch (e) {
         res.status(500).json({message: e.message});
