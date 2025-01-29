@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type {Post} from "../../models.ts";
 import {inject, type Ref, ref} from "vue";
-import MuteButton from "./MuteButton.vue";
-import {muteUser, unmuteUser} from "../../services/apiService.ts";
+import BlockButton from "./BlockButton.vue";
+import {blockUser, unblockUser} from "../../services/apiService.ts";
 import {useHover} from "../../hooks/useHover.ts";
-import MutedIcon from "./MutedIcon.vue";
+import BlockedIcon from "./BlockedIcon.vue";
 
 const props = defineProps<{ post: Post }>()
 const emit = defineEmits(['reloadReplies']);
@@ -13,15 +13,15 @@ const {authToken} = inject<{ authToken: Ref<string, string> }>("authToken", {aut
 const { isHovered, bind } = useHover();
 const {onMouseEnter, onMouseLeave} = bind;
 
-async function muteOrUnmute() {
-    if (props.post.isMuted > 0) {
-      if (await unmuteUser(props.post.authorUsername, authToken.value)) {
-        props.post.isMuted = 0;
+async function blockOrUnblock() {
+    if (props.post.isBlocked > 0) {
+      if (await unblockUser(props.post.authorUsername, authToken.value)) {
+        props.post.isBlocked = 0;
         emit('reloadReplies');
       }
     } else {
-      if (await muteUser(props.post.authorUsername, authToken.value)) {
-        props.post.isMuted = 1;
+      if (await blockUser(props.post.authorUsername, authToken.value)) {
+        props.post.isBlocked = 1;
         emit('reloadReplies');
       }
     }
@@ -31,17 +31,18 @@ async function muteOrUnmute() {
 <template>
 <div class="post" v-if="post" @click.stop="$router.push(`/post/${post.id}`)">
 <div class="post-header-info" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
-  <MutedIcon/>
+  <BlockedIcon/>
   <p class="username">{{ post.authorDisplayName }}</p>
   <p class="username">@{{ post.authorUsername }}</p>
   <p class="lessimportant">...</p>
-  <MuteButton v-if="isHovered" class="mute-block-btn" :is-muted="post.isMuted" @mute-or-unmute="muteOrUnmute"/>
+  <BlockButton v-if="isHovered" class="block-block-btn" :is-blocked="post.isBlocked" @block-or-unblock="blockOrUnblock"/>
 </div>
 </div>
 </template>
 
 <style scoped lang="scss">
 .post {
+  //background-color: #1D1E20;
   background-color: $color-secondary;
   &:hover {
     cursor: pointer;
@@ -63,5 +64,8 @@ async function muteOrUnmute() {
 }
 .lessimportant {
   color: $color-less-important;
+}
+.li-svg {
+  fill: $color-less-important;
 }
 </style>

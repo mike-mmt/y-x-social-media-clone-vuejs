@@ -15,6 +15,7 @@ const { isHovered, bind } = useHover();
 
 watch(me, (newMe) => {
   if (newMe) {
+    socket.off(`notification:${newMe.username}`);
     socket.on(`notification:${newMe.username}`, (notification) => {
       console.log(`notification:${newMe.username}:`, notification);
       constructNotification(notification);

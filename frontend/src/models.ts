@@ -10,6 +10,7 @@ export interface Post {
     datePosted: Date,
     hasLiked: number,
     isMuted: number,
+    isBlocked: number,
 }
 export interface User {
     username: string,
