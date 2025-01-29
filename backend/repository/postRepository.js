@@ -9,6 +9,7 @@ const POST_PROJECTION = `*, first(in('Posted')).username AS authorUsername,
   in('Likes').size() AS likesCount,
    in('Replied').size() AS repliesCount,
    first((SELECT COUNT(*) AS isMuted FROM (SELECT expand(in('Muted')) FROM (SELECT expand(in('Posted')) FROM $current)) WHERE @rid = :userRid)).isMuted AS isMuted,
+   first((SELECT COUNT(*) AS isBlocked FROM (SELECT expand(in('Blocked')) FROM (SELECT expand(in('Posted')) FROM $current)) WHERE @rid = :userRid)).isBlocked AS isBlocked,
     first((SELECT COUNT(*) AS hasLiked FROM (SELECT expand(in('Likes')) FROM $current) WHERE @rid = :userRid)).hasLiked AS hasLiked`;
 
 export async function findAll() {
@@ -70,7 +71,7 @@ export async function deleteById(id) {
 
 export async function findReplies(id, user) {
     const session = await pool.acquire();
-    const result = await session.query(`SELECT ${POST_PROJECTION} FROM (SELECT expand(in("Replied")) FROM Post WHERE id = :id) WHERE :userRid NOT IN first(in('Posted')).in('Blocked')`, {params: {id: id, userRid: user['@rid']}}).all();
+    const result = await session.query(`SELECT ${POST_PROJECTION} FROM (SELECT expand(in("Replied")) FROM Post WHERE id = :id) ORDER BY datePosted DESC`, {params: {id: id, userRid: user['@rid']}}).all();
     await session.close();
     return result;
 }
@@ -132,7 +133,7 @@ export async function findNewestFromFollowedWithPagination(user, page, limit) {
     const result = await session.query(
         `SELECT ${POST_PROJECTION} FROM (SELECT expand(out('Posted'))
                FROM User
-                WHERE :userRid IN in('Follows') AND :userRid NOT IN in('Muted') AND :userRid NOT IN both('Blocked') ORDER BY datePosted DESC) WHERE out('Replied').size() = 0 LIMIT :limit SKIP :offset`,
+                WHERE :userRid IN in('Follows') AND :userRid NOT IN in('Muted') AND :userRid NOT IN out('Blocked') ORDER BY datePosted DESC) WHERE out('Replied').size() = 0 LIMIT :limit SKIP :offset`,
         {
             params: {
                 userRid: user['@rid'],
@@ -152,7 +153,7 @@ export async function findNewestFromRandomNonFollowedWithPagination(user, page, 
         WHERE @rid NOT IN (SELECT in FROM Follows WHERE out = :userRid)
         AND @rid != :userRid
         AND :userRid NOT IN in('Muted')
-        AND :userRid NOT IN both('Blocked')`,
+        AND :userRid NOT IN out('Blocked')`,
         {params: {userRid: user['@rid']}}).all();
     // randomly choose up to amountOfUsers non-followed users
     const randomNotFollowedUsers = notFollowedUsers.sort(() => Math.random() - 0.5).slice(0, amountOfUsers);
@@ -169,7 +170,8 @@ SELECT expand(out('Posted'))
             params: {
                 randomNotFollowedUsers: randomNotFollowedUsers.map(u => u['@rid']),
                 postLimit: postLimit,
-                offset: page * postLimit
+                offset: page * postLimit,
+                userRid: user['@rid']
             }
         }).all()
     await session.close();

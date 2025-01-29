@@ -152,7 +152,7 @@ onMounted(() => {
       <TransitionGroup name="feed-list" :css="false"  @before-enter="beforeEnter" @enter="onEnter" @leave="" >
         <Post v-for="(post, index) in userPosts" :post="post" :key="post.id" class="feed-item" @like-or-unlike="likeOrUnlike" :data-index="index"/>
       </TransitionGroup>
-      <div v-if="animationDone" class="fetch-more" @click="fetchMorePosts">Fetch more posts</div>
+      <div v-if="animationDone" class="fetch-more" @click="fetchMorePosts">More posts</div>
     </div>
   </div>
 </template>

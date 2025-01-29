@@ -43,6 +43,9 @@ onMounted(() => {
     validateToken(token).then((isValid) => {
       if (isValid) {
         setAuthToken(token, $cookies!);
+        if (router.currentRoute.value.path === "/login") {
+          router.push("/");
+        }
         return;
       } else {
         router.push("/login");

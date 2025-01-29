@@ -3,6 +3,7 @@ import Logo from "./home/Logo.vue";
 import ProfileIcon from "./post/ProfileIcon.vue";
 import {inject, type Ref} from "vue";
 import type {User} from "../models.ts";
+import Notifications from "./notifications/Notifications.vue";
 const user = inject("user") as Ref<User | null>;
 
 const props = defineProps<{ logout: () => void }>();
@@ -20,6 +21,7 @@ const props = defineProps<{ logout: () => void }>();
       </div>
     </RouterLink>
     <div v-if="user" class="logout" @click="props.logout">Log out</div>
+    <Notifications class="notifications"/>
   </div>
 </template>
 
@@ -68,5 +70,8 @@ const props = defineProps<{ logout: () => void }>();
     background-color: $color-darkgray;
 
   }
+}
+.notifications {
+  margin-top: 0.5rem;
 }
 </style>

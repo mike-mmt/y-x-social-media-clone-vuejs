@@ -98,8 +98,7 @@ export async function signUp(username: string, email: string, password: string, 
         const response = await axios.post(`${apiUrl}/users`, {username, email, password, displayName})
         return response.data
     } catch (error) {
-        console.error(error)
-        return null
+        throw error
     }
 }
 

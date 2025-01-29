@@ -4,6 +4,12 @@ const router = express.Router();
 import Joi from 'joi';
 import * as postRepo from '../repository/postRepository.js';
 import passport from 'passport';
+import {
+    broadcastPostLike,
+    broadcastPostNewReply,
+    broadcastPostUnlike, broadcastUserPostLikeNotification,
+    broadcastUserPostReplyNotification
+} from '../sio.js';
 
 // helpers
 const defaultAllowedFields = ['id', 'author', 'body', 'datePosted', 'media', 'likesCount', 'childCount'];
@@ -45,6 +51,14 @@ router.post('/', passport.authenticate('jwt', {session: false}), async (req, res
     }
     try {
         const post = await postRepo.save(value, req.user);
+        if (post["parent"]) {
+            const parentPost = await postRepo.findById(post["parent"], req.user);
+            if (parentPost) {
+                console.log("backend: route: post", parentPost)
+                broadcastPostNewReply(post["parent"], post);
+                broadcastUserPostReplyNotification(parentPost.authorUsername, parentPost, post);
+            }
+        }
         res.status(201).json(post);
     } catch (e) {
         console.error(e);
@@ -94,8 +108,14 @@ router.delete('/id/:id', passport.authenticate('jwt', {session: false}), async (
 router.post('/id/:id/like', passport.authenticate('jwt', {session: false}), async (req, res) => {
     const id = req.params.id;
     try {
-        const post = await postRepo.like(id, req.user);
-        res.status(200).json(post);
+        const like = await postRepo.like(id, req.user);
+        const likedPost = await postRepo.findById(id, req.user);
+        console.log("backend: route: like", like)
+        broadcastPostLike(id, req.user.username);
+        if (likedPost.authorUsername !== req.user.username) {
+            broadcastUserPostLikeNotification(likedPost.authorUsername, likedPost, req.user);
+        }
+        res.status(200).json(like);
     } catch (e) {
         res.status(500).json({message: e.message});
     }
@@ -105,6 +125,7 @@ router.post('/id/:id/unlike', passport.authenticate('jwt', {session: false}), as
     const id = req.params.id;
     try {
         const post = await postRepo.unlike(id, req.user);
+        broadcastPostUnlike(id, req.user.username);
         res.status(200).json(post);
     } catch (e) {
         res.status(500).json({message: e.message});

@@ -11,7 +11,7 @@ import {
   getFollowing,
   getMuted, muteUser, unblockUser,
   unfollowUser,
-  unmuteUser
+  unmuteUser,
 } from "../../services/apiService.ts";
 import BlockButton from "../postview/BlockButton.vue";
 import FollowButton from "../postview/FollowButton.vue";
@@ -26,10 +26,10 @@ const blocked = ref<User[]>([]);
 
 async function fetchAll() {
   if (user.value) {
-    followers.value = await getFollowers(user.value.username, authToken.value)
-    following.value = await getFollowing(user.value.username, authToken.value)
-    muted.value = await getMuted(user.value.username, authToken.value)
-    blocked.value = await getBlocked(user.value.username, authToken.value)
+    followers.value = await getFollowers(user.value.username, authToken.value);
+    following.value = await getFollowing(user.value.username, authToken.value);
+    muted.value = await getMuted(user.value.username, authToken.value);
+    blocked.value = await getBlocked(user.value.username, authToken.value);
   }
 }
 
@@ -44,8 +44,8 @@ async function followOrUnfollow(userToEdit: User) {
     }
   }
   if (user.value) {
-    followers.value = await getFollowers(user.value.username, authToken.value)
-    following.value = await getFollowing(user.value.username, authToken.value)
+    followers.value = await getFollowers(user.value.username, authToken.value);
+    following.value = await getFollowing(user.value.username, authToken.value);
   }
 }
 
@@ -62,7 +62,7 @@ async function muteOrUnmute(userToEdit: User) {
     }
   }
   if (user.value) {
-    muted.value = await getMuted(user.value.username, authToken.value)
+    muted.value = await getMuted(user.value.username, authToken.value);
   }
 }
 
@@ -79,7 +79,7 @@ async function blockOrUnblock(userToEdit: User) {
     }
   }
   if (user.value) {
-    blocked.value = await getBlocked(user.value.username, authToken.value)
+    blocked.value = await getBlocked(user.value.username, authToken.value);
   }
 }
 
@@ -87,9 +87,9 @@ onMounted(() => {
   fetchAll();
   watch(user, () => {
     fetchAll();
-  })
+  });
   console.log(user.value);
-})
+});
 </script>
 
 <template>
@@ -105,7 +105,7 @@ onMounted(() => {
       <div class="column bigger-column">
         <p class="list-header">{{ user.followersCount }} Followers</p>
         <div class="followers-list list">
-          <div class="list-item" v-for="follower in followers">
+          <div class="list-item" v-for="follower in followers" @click.stop="$router.push(`/user/${follower.username}`)">
             <ProfileIcon/>
             <div class="names">
               <h3 class="display-name">{{ follower.displayName }}</h3>
@@ -123,7 +123,8 @@ onMounted(() => {
         <p class="list-header">{{ user.followingCount }} Following</p>
 
         <div class="muted-list list">
-          <div class="list-item" v-for="followedUser in following">
+          <div class="list-item" v-for="followedUser in following"
+               @click.stop="$router.push(`/user/${followedUser.username}`)">
             <ProfileIcon/>
             <div class="names">
               <h3 class="display-name">{{ followedUser.displayName }}</h3>
@@ -144,7 +145,7 @@ onMounted(() => {
         <p class="list-header">Muted</p>
 
         <div class="muted-list list">
-          <div class="list-item" v-for="mutedUser in muted">
+          <div class="list-item" v-for="mutedUser in muted" @click.stop="$router.push(`/user/${mutedUser.username}`)">
             <ProfileIcon/>
             <div class="names">
               <h3 class="display-name">{{ mutedUser.displayName }}</h3>
@@ -160,7 +161,8 @@ onMounted(() => {
         <p class="list-header">Blocked</p>
 
         <div class="muted-list list">
-          <div class="list-item" v-for="blockedUser in blocked">
+          <div class="list-item" v-for="blockedUser in blocked"
+               @click.stop="$router.push(`/user/${blockedUser.username}`)">
             <ProfileIcon/>
             <div class="names">
               <h3 class="display-name">{{ blockedUser.displayName }}</h3>
