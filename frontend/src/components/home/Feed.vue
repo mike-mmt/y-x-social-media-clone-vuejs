@@ -2,7 +2,7 @@
 import {Feeds} from "../../enums/feeds.enum.ts";
 import Post from "../post/Post.vue";
 import type {Post as PostType} from "../../models.ts"
-import {inject, onMounted, onUnmounted, type Ref, ref, watch} from "vue";
+import {computed, inject, onMounted, onUnmounted, type Ref, ref, watch} from "vue";
 import {getFollowingPosts, getForYouPosts, getMyPosts, likePost, unlikePost} from "../../services/apiService.ts";
 import { gsap } from "gsap";
 
@@ -13,6 +13,10 @@ const loading = ref(true);
 const locked = ref(false);
 const animationDone = ref(false);
 const { authToken } = inject<{ authToken: Ref<string, string> }>("authToken", {authToken: ref("")});
+
+const filteredPosts = computed(() => {
+  return posts.value.filter((post) => post.isBlocked === 0 && post.isMuted === 0);
+});
 
 async function lock() {
   locked.value = true;
@@ -154,9 +158,9 @@ defineExpose({
 <template>
   <div class="feed">
     <TransitionGroup name="feed-list" :css="false"  @before-enter="beforeEnter" @enter="onEnter" @leave="" >
-      <Post v-for="(post, index) in posts" :post="post" :key="post.id" class="feed-item" @like-or-unlike="likeOrUnlike" :data-index="index"/>
+      <Post v-for="(post, index) in filteredPosts"  :post="post" :key="post.id" class="feed-item" @like-or-unlike="likeOrUnlike" :data-index="index"/>
     </TransitionGroup>
-    <div v-if="animationDone" class="fetch-more" @click="fetchMorePosts">Fetch more posts</div>
+    <div v-if="animationDone" class="fetch-more" @click="fetchMorePosts">More posts</div>
 
   </div>
 </template>

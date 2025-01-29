@@ -3,6 +3,7 @@ import {inject, ref} from "vue";
 import {getAuthToken, signUp} from "../../services/apiService.ts";
 import {useRouter} from "vue-router";
 import type {VueCookies} from "vue-cookies";
+import axios from "axios";
 
 enum Tabs {
   LogIn = 'log-in',
@@ -40,14 +41,25 @@ async function login() {
 async function register() {
   try {
     await signUp(username.value, email.value, password.value, displayName.value);
-    username.value = '';
-    email.value = '';
-    displayName.value = '';
-    const token = await getAuthToken(username.value, password.value);
-    setAuthToken(token, $cookies!);
+    try {
+      const token = await getAuthToken(username.value, password.value);
+      setAuthToken(token, $cookies!);
+    } catch (e) {
+      errorMessage.value = "Registration successful, please log in manually";
+    }
+    errorMessage.value = '';
     router.push('/');
   } catch (e) {
-    errorMessage.value = "Registration failed";
+    if (axios.isAxiosError(e)) {
+      errorMessage.value = `Registration failed: ${e.response?.data.message}`;
+    } else {
+      errorMessage.value = `Registration failed`;
+    }
+  } finally {
+    username.value = '';
+    displayName.value = '';
+    email.value = '';
+    password.value = '';
   }
 }
 
@@ -71,7 +83,7 @@ async function register() {
         Register
       </button>
     </div>
-    <div v-if="activeTab === Tabs.LogIn" class="form">
+    <div v-if="activeTab == Tabs.LogIn" class="form">
       <label for="username">Username</label>
       <input class="input" type="text" id="username" placeholder="Username" v-model="username"/>
       <label for="password">Password</label>
@@ -79,7 +91,7 @@ async function register() {
       <button @click="login" class="login-btn">Log In</button>
       <p class="error-message" v-if="errorMessage">{{ errorMessage }}</p>
     </div>
-    <div v-else-if="activeTab === Tabs.Register" class="form">
+    <div v-else-if="activeTab == Tabs.Register" class="form">
       <label for="username">Username</label>
       <input class="input" type="text" id="username" placeholder="Username" v-model="username"/>
       <label for="displayName">Display name</label>
@@ -89,6 +101,7 @@ async function register() {
       <label for="password">Password</label>
       <input class="input" type="password" id="password" placeholder="Password" v-model="password"/>
       <button class="login-btn" @click="register">Create account</button>
+      <p class="error-message" v-if="errorMessage">{{ errorMessage }}</p>
     </div>
   </div>
 </template>

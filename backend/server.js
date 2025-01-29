@@ -51,6 +51,12 @@ import {config as configRepos} from "./repository/configRepos.js";
 
 import {initDatabase} from './repository/init.js';
 
+// websockets & server setup
+import { createServer } from 'http';
+const server = createServer(app);
+import { setupSio } from "./sio.js";
+setupSio(server);
+
 try {
     // setup db
     let client, pool;
@@ -82,7 +88,7 @@ try {
     const apiPort = process.env.PORT || 3000;
     const apiHost = process.env.API_HOST || 'localhost';
 
-    const server = app.listen(apiPort, () => {
+    server.listen(apiPort, apiHost, () => {
         console.log(`Serwer działa na https://${apiHost}:${apiPort}`);
     });
     server.setTimeout(1000 * 3); // 3 seconds

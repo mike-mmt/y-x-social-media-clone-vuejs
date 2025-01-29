@@ -10,6 +10,7 @@ export interface Post {
     datePosted: Date,
     hasLiked: number,
     isMuted: number,
+    isBlocked: number,
 }
 export interface User {
     username: string,
@@ -21,4 +22,12 @@ export interface User {
     followingCount: number,
     followersCount: number,
 
+}
+
+export interface NotificationType {
+    type: string,
+    timestamp: Date,
+    link: string,
+    description: string,
+    content?: string,
 }
