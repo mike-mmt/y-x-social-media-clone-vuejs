@@ -15,7 +15,7 @@ const animationDone = ref(false);
 const { authToken } = inject<{ authToken: Ref<string, string> }>("authToken", {authToken: ref("")});
 
 const filteredPosts = computed(() => {
-  return posts.value.filter((post) => post.isBlocked === 0 && post.isMuted === 0);
+  return posts.value.filter((post) => post.isBlocked === 0 && post.isMuted === 0).sort((a, b) => b.datePosted.getTime() - a.datePosted.getTime());
 });
 
 async function lock() {

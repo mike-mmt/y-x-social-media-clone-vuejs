@@ -173,7 +173,7 @@ function writeReply(body: string, media: string) {
   if (post.value) {
     createPost(body, media, post.value.id, authToken.value).then((newPost) => {
       console.log(newPost);
-      replies.value.push(newPost);
+      replies.value.unshift(newPost);
       post.value!.repliesCount!++;
     });
   }
@@ -259,7 +259,7 @@ function beforeEnter(el: any) {
     <WriteReply v-if="post" :replying-to="post.authorUsername" @post-reply="writeReply"/>
     <div class="replies" v-if="replies.length > 0">
       <TransitionGroup name="replies-list" :css="false"  @before-enter="beforeEnter" @enter="onEnter" @leave="" >
-      <template v-for="reply in replies" :key="reply.id">
+      <template v-for="reply in replies.sort((a, b) => b.datePosted.getTime() - a.datePosted.getTime())" :key="reply.id">
         <MutedPost v-if="reply.isMuted > 0" :post="reply" @reloadReplies="fetchPost(authToken)" />
         <BlockedPost v-else-if="reply.isBlocked > 0" :post="reply" @reload-replies="fetchPost(authToken)"/>
         <Post v-else :post="reply"  :isReply="true" @like-or-unlike="likeOrUnlikeReply"/>
